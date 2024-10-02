@@ -1,0 +1,47 @@
+package wsuv.cs;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.utils.ScreenUtils;
+
+public class VictoryScreen extends ScreenAdapter {
+    CSGame csGame;
+    BitmapFont font;
+    float timer;
+    int score;
+
+    public VictoryScreen(CSGame game, int playerScore) {
+        csGame = game;
+        font = csGame.am.get(CSGame.RSC_MONO_FONT);
+        font.setColor(Color.WHITE);
+        timer = 0;
+        score = playerScore;
+    }
+
+    @Override
+    public void show() {
+        Gdx.app.log("VictoryScreen", "show");
+    }
+
+    public void update(float delta) {
+        timer += delta;
+        if ((timer >= 20.0) || (timer >= 5.0 && Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY))) {
+            csGame.setScreen(new SplashScreen(csGame));
+        }
+    }
+
+    public void render(float delta) {
+        update(delta);
+        ScreenUtils.clear(0, 0, 0, 1);
+        csGame.batch.begin();
+        font.draw(csGame.batch, "Final Score (this should be the maximum unless you CHEATED): ", 100, 400);
+        font.draw(csGame.batch, Integer.toString(score), 600, 400);
+        csGame.batch.draw(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class), 200, 150);
+        font.draw(csGame.batch, "You Win! Yippee!", 375, 150);
+        csGame.batch.end();
+    }
+}
