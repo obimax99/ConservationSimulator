@@ -21,8 +21,20 @@ public class CSGame extends Game{
     public static final String RSC_PRESSAKEY_IMG = "pressakey.png";
     public static final String RSC_MONO_FONT_FILE = "JetBrainsMono-Regular.ttf";
     public static final String RSC_MONO_FONT = "JBM.ttf";
+
     public static final String RSC_FROGTOWER_IMG = "frogTower.png";
+    public static final String RSC_BEE_IMG = "bee.png";
+
+    public static final String RSC_LUMBERJACK_IMG = "lumberjack.png";
+    public static final String RSC_BULLDOZER_IMG = "bulldozer.png";
+    public static final String RSC_SHREDDER_IMG = "shredder.png";
+
     public static final String RSC_GRASS_IMG = "grass.png";
+    public static final String RSC_ROOTS_IMG = "roots.png";
+    public static final String RSC_SHRUBS_IMG = "shrubs.png";
+    public static final String RSC_TREES_IMG = "trees.png";
+    public static final String RSC_ROCKS_IMG = "rocks.png";
+
 
     AssetManager am;  // AssetManager provides a single source for loaded resources
     SpriteBatch batch;
@@ -49,8 +61,19 @@ public class CSGame extends Game{
         // Load Textures after the font...
         am.load(RSC_GAMEOVER_IMG, Texture.class);
         am.load(RSC_PRESSAKEY_IMG, Texture.class);
+
         am.load(RSC_FROGTOWER_IMG, Texture.class);
+        am.load(RSC_BEE_IMG, Texture.class);
+
+        am.load(RSC_LUMBERJACK_IMG, Texture.class);
+        am.load(RSC_BULLDOZER_IMG, Texture.class);
+        am.load(RSC_SHREDDER_IMG, Texture.class);
+
         am.load(RSC_GRASS_IMG, Texture.class);
+        am.load(RSC_ROOTS_IMG, Texture.class);
+        am.load(RSC_SHRUBS_IMG, Texture.class);
+        am.load(RSC_TREES_IMG, Texture.class);
+        am.load(RSC_ROCKS_IMG, Texture.class);
 
         // Load Sounds
 
