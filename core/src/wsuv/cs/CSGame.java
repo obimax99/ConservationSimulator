@@ -21,6 +21,8 @@ public class CSGame extends Game{
     public static final String RSC_PRESSAKEY_IMG = "pressakey.png";
     public static final String RSC_MONO_FONT_FILE = "JetBrainsMono-Regular.ttf";
     public static final String RSC_MONO_FONT = "JBM.ttf";
+    public static final String RSC_FROGTOWER_IMG = "frogTower.png";
+    public static final String RSC_GRASS_IMG = "grass.png";
 
     AssetManager am;  // AssetManager provides a single source for loaded resources
     SpriteBatch batch;
@@ -47,6 +49,8 @@ public class CSGame extends Game{
         // Load Textures after the font...
         am.load(RSC_GAMEOVER_IMG, Texture.class);
         am.load(RSC_PRESSAKEY_IMG, Texture.class);
+        am.load(RSC_FROGTOWER_IMG, Texture.class);
+        am.load(RSC_GRASS_IMG, Texture.class);
 
         // Load Sounds
 

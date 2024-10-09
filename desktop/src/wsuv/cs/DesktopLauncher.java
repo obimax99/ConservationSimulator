@@ -9,7 +9,7 @@ public class DesktopLauncher {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(60);
 		config.setTitle("Conservation Simulator");
-		config.setWindowedMode(800, 600);
+		config.setWindowedMode(1120, 928);
 		config.useVsync(true);
 		new Lwjgl3Application(new CSGame(), config);
 	}
