@@ -126,8 +126,22 @@ public class PlayScreen extends ScreenAdapter {
         // ignore key presses when console is open...
         if (!hud.isOpen()) {
             // clicking
-
         }
+
+        // check to see which towers shoot
+        for (Tower tower : towers) {
+            // updates internal attack timers and maybe other stuff idk yet
+            tower.update(delta);
+            // if attack isn't ready OR nothing is in range, this method will return null
+            Logger targetedLogger = tower.attack(liveLoggers);
+            if (targetedLogger == null) { continue; }
+            // if we actually can shoot, then shoot at that logger
+            shootProjectile(tower.row, tower.col, targetedLogger.row, targetedLogger.col);
+        }
+
+        // shoot those arrows
+
+        // move loggers and check if they're dead or not
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
             // move loggers with pathfinding
@@ -303,5 +317,9 @@ public class PlayScreen extends ScreenAdapter {
             totalLoggers.add(new Lumberjack(csGame, 0, 0));
         }
         if (skipWave) { timer = wave_time + 1; loggerSpawnCount =  currentWave+2; }
+    }
+
+    public void shootProjectile(int towerRow, int towerCol, int loggerRow, int loggerCol) {
+        System.out.println("shoot");
     }
 }
