@@ -38,8 +38,7 @@ public class CSGame extends Game{
 
     AssetManager am;  // AssetManager provides a single source for loaded resources
     SpriteBatch batch;
-
-    // Random random = new Random();
+    Random random = new Random();
 
 
     @Override

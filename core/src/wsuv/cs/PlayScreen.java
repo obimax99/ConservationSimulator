@@ -15,11 +15,9 @@ public class PlayScreen extends ScreenAdapter {
     // things that don't require logic
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
-    private ArrayList<String> waves;
     private final int NUM_WAVES = 150;
     private HUD hud;
     private SubState state;
-    private float timer;
     private int highScore;
     private int currentWave;
     private Terrain[] terrains;
@@ -27,6 +25,13 @@ public class PlayScreen extends ScreenAdapter {
     private final int GRID_SIZE = 29;
     private Tile[][] grid;
     private int[][] setupGrid;
+
+    private float timer;
+    private float wave_time;
+    private float time_between_spawns;
+    private ArrayList<Logger> liveLoggers;
+    private ArrayList<Logger> totalLoggers;
+    private int loggerSpawnCount;
 
     // things that require logic
     private ArrayList<Tower> towers;
@@ -37,8 +42,6 @@ public class PlayScreen extends ScreenAdapter {
         csGame = game;
         state = SubState.PLAYING;
         hud = new HUD(csGame.am.get(CSGame.RSC_MONO_FONT));
-        waves = new ArrayList<>(NUM_WAVES);
-        currentWave = 1;
         FileHandle file = Gdx.files.internal("highscore.txt");
         highScore = Integer.parseInt(file.readString());
         terrains = new Terrain[NUM_TERRAINS];
@@ -48,6 +51,8 @@ public class PlayScreen extends ScreenAdapter {
         towers = new ArrayList<>(1);
         setGrid();
 
+        resetWaves();
+        goNextWave(false);
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -61,7 +66,12 @@ public class PlayScreen extends ScreenAdapter {
             public String execute(String[] cmd) {
                 try {
                     int x = Integer.parseInt(cmd[1]);
-                    if ((x > 20) || (x < 1)) return "Invalid Wave Number";
+                    if ((x > NUM_WAVES) || (x < 1)) return "Invalid Wave Number";
+                    resetWaves();
+                    for (int i = 0; i < (x-1); i++) {
+                        goNextWave(true);
+                    }
+                    goNextWave(false);
                     return "ok!";
                 } catch (Exception e) {
                     return help;
@@ -108,11 +118,27 @@ public class PlayScreen extends ScreenAdapter {
         if (state == SubState.GAME_OVER && timer > 3.0f) {
             state = SubState.READY;
         }
+
+        // spawn next logger if more remain to be spawned
+        if ((loggerSpawnCount < currentWave+2) && (timer >= (loggerSpawnCount * time_between_spawns))) {
+            spawnNextLogger();
+        }
+
         // ignore key presses when console is open...
         if (!hud.isOpen()) {
             // clicking
 
         }
+        for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
+            Logger logger = loggerIterator.next();
+            // move loggers with pathfinding
+            logger.update();
+            // checking collisions here? loggers are responsible for taking damage from bees!
+            if (logger.isDead()) { loggerIterator.remove(); }
+        }
+        // if all the loggers are dead (after they've all been spawned!), then the wave has been beaten.
+        if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
+
     }
 
     @Override
@@ -142,6 +168,12 @@ public class PlayScreen extends ScreenAdapter {
         // draw the entities
         for (Tower tower : towers) {
             tower.draw(csGame.batch);
+        }
+
+        for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
+            Logger logger = loggerIterator.next();
+            if (logger.isDead()) { loggerIterator.remove(); }
+            else { logger.draw(csGame.batch); }
         }
 
         hud.draw(csGame.batch);
@@ -215,5 +247,62 @@ public class PlayScreen extends ScreenAdapter {
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         };
+    }
+
+    public void spawnNextLogger() {
+        Logger logger = totalLoggers.get(loggerSpawnCount);
+        int spawnRow = 0;
+        int spawnCol = 0;
+        if(csGame.random.nextBoolean()) {
+            // half the loggers spawn along the top and bottom rows
+            spawnRow = csGame.random.nextInt(2) * (GRID_SIZE-1);
+            spawnCol = csGame.random.nextInt(GRID_SIZE);
+        }
+        else {
+            // and half along the left and right columns
+            spawnCol = csGame.random.nextInt(2) * (GRID_SIZE-1);
+            spawnRow = csGame.random.nextInt(GRID_SIZE);
+        }
+        loggerSpawnCount++;
+        liveLoggers.add(logger.makeCopy(csGame, spawnRow, spawnCol));
+        System.out.println(spawnRow + " " + spawnCol);
+    }
+
+    public void resetWaves() {
+        currentWave = 0;
+        totalLoggers = new ArrayList<Logger>(3+NUM_WAVES);
+        // wave 1 will start with 3 total lumberjacks, so add two immediately
+        totalLoggers.add(new Lumberjack(csGame, 0, 0));
+        totalLoggers.add(new Lumberjack(csGame, 0, 0));
+
+        killAllLoggers();
+        wave_time = 10;
+    }
+
+    public void killAllLoggers() {
+        liveLoggers = new ArrayList<Logger>(3+NUM_WAVES);
+    }
+
+    public void goNextWave(boolean skipWave) {
+        currentWave++;
+        // Add the correct type of logger based on the current wave
+        // Every wave adds a logger: usually a lumberjack, but every fifth
+        // wave is a bulldozer and every eighth wave is a shredder.
+        // Additionally, every wave increases the total time of spawning by 1 second.
+        // This means that the time between logger spawns slowly decreases, approaching but never hitting 1 per second.
+        wave_time++;
+        timer = 0;
+        loggerSpawnCount = 0;
+        time_between_spawns = wave_time / totalLoggers.size();
+        if (currentWave % 8 == 0) {
+            totalLoggers.add(new Shredder(csGame, 0, 0));
+        }
+        else if (currentWave % 5 == 0) {
+            totalLoggers.add(new Bulldozer(csGame, 0, 0));
+        }
+        else {
+            totalLoggers.add(new Lumberjack(csGame, 0, 0));
+        }
+        if (skipWave) { timer = wave_time + 1; loggerSpawnCount =  currentWave+2; }
     }
 }
