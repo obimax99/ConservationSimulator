@@ -213,8 +213,8 @@ public class PlayScreen extends ScreenAdapter {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j] = new Tile(terrains[setupGrid[i][j]]);
-                grid[i][j].setX(i * 32);
-                grid[i][j].setY(j * 32);
+                grid[i][j].setX(i * TILE_SIZE);
+                grid[i][j].setY(j * TILE_SIZE);
             }
         }
         Tower tower = new Tower(csGame, GRID_SIZE/2, GRID_SIZE/2);

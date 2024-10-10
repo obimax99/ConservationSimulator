@@ -20,8 +20,8 @@ public class Tower extends Sprite {
         super(game.am.get("frogTower.png", Texture.class));
         this.row = row;
         this.col = col;
-        this.setX(col*32);
-        this.setY(row*32);
+        this.setX(col*TILE_SIZE);
+        this.setY(row*TILE_SIZE);
         this.health = 5;
         this.range = 30;
         this.time_between_attacks = 1.0f;
