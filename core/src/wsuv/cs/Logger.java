@@ -11,18 +11,31 @@ public abstract class Logger extends Sprite {
     protected int row;
     protected int col;
     public final float MOVE_SPEED = 32;
+    private boolean dead;
 
     Logger(Texture texture) {
         super(texture);
+        dead = false;
     }
 
-    protected boolean takeDamage(int damage) {
+    public void update() {
+        // pathfinding
+        // movement whatever who cares
+        // thankfully because 32 pixels is one tile and we know that, we can do shortcuts like this:
+        // (at least until we do actual smooth movement haha)
+        setX(row*32);
+        setY(col*32);
+    }
+
+    protected void takeDamage(int damage) {
+        if (isDead()) { return; }
         this.health -= damage;
         if (health <= 0) {
-            return true;
+            dead = true;
         }
-        return false;
     }
+
+    public boolean isDead() { return dead; }
 
     public abstract Logger makeCopy(CSGame game, int row, int col);
 
