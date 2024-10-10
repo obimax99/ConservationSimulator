@@ -11,18 +11,17 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import static wsuv.cs.Constants.*;
+
 public class PlayScreen extends ScreenAdapter {
     // things that don't require logic
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
-    private final int NUM_WAVES = 150;
     private HUD hud;
     private SubState state;
     private int highScore;
     private int currentWave;
     private Terrain[] terrains;
-    private final int NUM_TERRAINS = 5;
-    private final int GRID_SIZE = 29;
     private Tile[][] grid;
     private int[][] setupGrid;
 
