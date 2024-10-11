@@ -14,12 +14,12 @@ public class FrogSpit extends Sprite {
     private Logger target;
     int damage;
 
-    public FrogSpit(CSGame game, int startRow, int startCol, Logger logger) {
+    public FrogSpit(CSGame game, int startGridX, int startGridY, Logger logger) {
         super(game.am.get("frogSpit.png", Texture.class));
         this.target = logger;
         this.damage = 1;
-        setX(startRow*TILE_SIZE);
-        setY(startCol*TILE_SIZE);
+        setX(startGridY*TILE_SIZE);
+        setY(startGridX*TILE_SIZE);
 
         // get normalized vector
         setVelocity();

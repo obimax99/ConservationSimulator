@@ -10,8 +10,8 @@ public abstract class Logger extends Sprite {
     // health stuff being lowered is shared
     protected int health;
     protected int damage;
-    protected int row;
-    protected int col;
+    protected int gridX;
+    protected int gridY;
     public final float MOVE_SPEED = 32;
     private boolean dead;
 
@@ -24,8 +24,8 @@ public abstract class Logger extends Sprite {
         // pathfinding
         // movement whatever who cares
         // (at least until we do actual smooth movement haha)
-        setX(row*TILE_SIZE);
-        setY(col*TILE_SIZE);
+        setX(gridX*TILE_SIZE);
+        setY(gridY*TILE_SIZE);
     }
 
     protected void takeDamage(int damage) {
@@ -38,6 +38,6 @@ public abstract class Logger extends Sprite {
 
     public boolean isDead() { return dead; }
 
-    public abstract Logger makeCopy(CSGame game, int row, int col);
+    public abstract Logger makeCopy(CSGame game, int gridX, int gridY);
 
 }

@@ -9,19 +9,19 @@ import java.lang.Math;
 import static wsuv.cs.Constants.*;
 
 public class Tower extends Sprite {
-    protected int row;
-    protected int col;
+    protected int gridY;
+    protected int gridX;
     private int health;
     private int range;
     private float time_between_attacks;
     private float tower_attack_timer;
 
-    public Tower(CSGame game, int row, int col) {
+    public Tower(CSGame game, int gridX, int gridY) {
         super(game.am.get("frogTower.png", Texture.class));
-        this.row = row;
-        this.col = col;
-        this.setX(col*TILE_SIZE);
-        this.setY(row*TILE_SIZE);
+        this.gridX = gridX;
+        this.gridY = gridY;
+        this.setX(gridX*TILE_SIZE);
+        this.setY(gridY*TILE_SIZE);
         this.health = 5;
         this.range = 30;
         this.time_between_attacks = 1.0f;
@@ -44,16 +44,16 @@ public class Tower extends Sprite {
     * */
     public Logger attack(ArrayList<Logger> liveLoggers) {
         if (tower_attack_timer < time_between_attacks) { return null; }
-        int minRow = Math.max(row-range, 0);
-        int minCol = Math.max(col-range, 0);
-        int maxRow = Math.min(row+range, GRID_SIZE-1);
-        int maxCol = Math.min(col+range, GRID_SIZE-1);
+        int mingridX = Math.max(gridX-range, 0);
+        int mingridY = Math.max(gridY-range, 0);
+        int maxgridX = Math.min(gridX+range, GRID_SIZE-1);
+        int maxgridY = Math.min(gridY+range, GRID_SIZE-1);
         int closestDist = 2*range;
         Logger closestLogger = null;
         for (Logger logger : liveLoggers) {
             // might be able to get rid of this first if statement.
-            if (logger.row >= minRow && logger.col >= minCol && logger.row <= maxRow && logger.col <= maxCol) {
-                int distFromTower = Math.abs(logger.row - row) + Math.abs(logger.col - col);
+            if (logger.gridY >= mingridY && logger.gridX >= mingridX && logger.gridY <= maxgridY && logger.gridX <= maxgridX) {
+                int distFromTower = Math.abs(logger.gridX - gridX) + Math.abs(logger.gridY - gridY);
                 if (distFromTower < closestDist) {
                     closestLogger = logger;
                 }
