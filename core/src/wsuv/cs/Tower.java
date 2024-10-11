@@ -23,7 +23,7 @@ public class Tower extends Sprite {
         this.setX(gridX*TILE_SIZE);
         this.setY(gridY*TILE_SIZE);
         this.health = 5;
-        this.range = 2;
+        this.range = 5;
         this.time_between_attacks = 1.0f;
         this.tower_attack_timer = 0.0f;
     }
@@ -44,17 +44,17 @@ public class Tower extends Sprite {
     * */
     public Logger attack(ArrayList<Logger> liveLoggers) {
         if (tower_attack_timer < time_between_attacks) { return null; }
-        int mingridX = Math.max(gridX-range, 0);
-        int mingridY = Math.max(gridY-range, 0);
-        int maxgridX = Math.min(gridX+range, GRID_SIZE-1);
-        int maxgridY = Math.min(gridY+range, GRID_SIZE-1);
+        int minGridX = Math.max(gridX-range, 0);
+        int minGridY = Math.max(gridY-range, 0);
+        int maxGridX = Math.min(gridX+range, GRID_SIZE-1);
+        int maxGridY = Math.min(gridY+range, GRID_SIZE-1);
         int closestDist = 2*range;
         Logger closestLogger = null;
         for (Logger logger : liveLoggers) {
-            // might be able to get rid of this first if statement.
-            if (logger.gridY >= mingridY && logger.gridX >= mingridX && logger.gridY <= maxgridY && logger.gridX <= maxgridX) {
+            if (logger.gridY >= minGridY && logger.gridX >= minGridX && logger.gridY <= maxGridY && logger.gridX <= maxGridX) {
                 int distFromTower = Math.abs(logger.gridX - gridX) + Math.abs(logger.gridY - gridY);
                 if (distFromTower < closestDist) {
+                    closestDist = distFromTower;
                     closestLogger = logger;
                 }
             }
