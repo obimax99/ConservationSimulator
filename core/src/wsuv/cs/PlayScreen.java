@@ -2,7 +2,9 @@ package wsuv.cs;
 
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.util.ArrayList;
@@ -11,11 +13,15 @@ import java.util.Iterator;
 import static wsuv.cs.Constants.*;
 
 public class PlayScreen extends ScreenAdapter {
+    private boolean DEBUG_pathfinding;
+    private boolean DEBUG_borders;
+
     // things that don't require logic
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
     private HUD hud;
     private SubState state;
+    private BitmapFont font;
     private int highScore;
     private int currentWave;
     private Terrain[] terrains;
@@ -38,6 +44,7 @@ public class PlayScreen extends ScreenAdapter {
         timer = 0;
         csGame = game;
         state = SubState.PLAYING;
+        DEBUG_pathfinding = false;
         hud = new HUD(csGame.am.get(CSGame.RSC_MONO_FONT));
         FileHandle file = Gdx.files.internal("highscore.txt");
         highScore = Integer.parseInt(file.readString());
@@ -48,6 +55,8 @@ public class PlayScreen extends ScreenAdapter {
         towers = new ArrayList<>(1);
         frogSpits = new ArrayList<>(5);
         setGrid();
+        font = csGame.am.get(CSGame.RSC_MONO_FONT);
+        font.setColor(Color.WHITE);
 
         resetWaves();
         goNextWave(false);
@@ -58,7 +67,7 @@ public class PlayScreen extends ScreenAdapter {
 
         // HUD Console Commands
         hud.registerAction("wave", new HUDActionCommand() {
-            static final String help = "Usage: wave <x> ";
+            static final String help = "Switch to a specific wave. Usage: wave <x> ";
 
             @Override
             public String execute(String[] cmd) {
@@ -70,6 +79,42 @@ public class PlayScreen extends ScreenAdapter {
                         goNextWave(true);
                     }
                     goNextWave(false);
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("pathfinding", new HUDActionCommand() {
+            static final String help = "Toggle pathfinding debug. Usage: pathfinding ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    DEBUG_pathfinding = !DEBUG_pathfinding;
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("borders", new HUDActionCommand() {
+            static final String help = "Toggle borders debug. Usage: borders ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    DEBUG_borders = !DEBUG_borders;
                     return "ok!";
                 } catch (Exception e) {
                     return help;
@@ -178,7 +223,13 @@ public class PlayScreen extends ScreenAdapter {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j].draw(csGame.batch);
+                if (DEBUG_pathfinding) {
+                    font.draw(csGame.batch, Integer.toString(grid[i][j].getTerrainCost()), i*TILE_SIZE+10, j*TILE_SIZE+((float) TILE_SIZE /2));
+                }
             }
+        }
+        if (DEBUG_borders) {
+            csGame.batch.draw(csGame.am.get(CSGame.RSC_BORDERS_IMG, Texture.class), 0, 0);
         }
 
         // draw the entities

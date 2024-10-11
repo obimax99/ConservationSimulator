@@ -30,6 +30,7 @@ public class CSGame extends Game{
     public static final String RSC_BULLDOZER_IMG = "bulldozer.png";
     public static final String RSC_SHREDDER_IMG = "shredder.png";
 
+    public static final String RSC_BORDERS_IMG = "borders.png";
     public static final String RSC_GRASS_IMG = "grass.png";
     public static final String RSC_ROOTS_IMG = "roots.png";
     public static final String RSC_SHRUBS_IMG = "shrubs.png";
@@ -70,6 +71,7 @@ public class CSGame extends Game{
         am.load(RSC_BULLDOZER_IMG, Texture.class);
         am.load(RSC_SHREDDER_IMG, Texture.class);
 
+        am.load(RSC_BORDERS_IMG, Texture.class);
         am.load(RSC_GRASS_IMG, Texture.class);
         am.load(RSC_ROOTS_IMG, Texture.class);
         am.load(RSC_SHRUBS_IMG, Texture.class);
