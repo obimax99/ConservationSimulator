@@ -4,12 +4,10 @@ import com.badlogic.gdx.graphics.Texture;
 
 public class Bulldozer extends Logger {
     Bulldozer(CSGame game, int gridX, int gridY) {
-        super(game.am.get("bulldozer.png", Texture.class));
+        super(game.am.get("bulldozer.png", Texture.class), gridX, gridY);
 
         health = 2;
         damage = 2;
-        this.gridX = gridX;
-        this.gridY = gridY;
     }
 
     public Bulldozer makeCopy(CSGame game, int gridX, int gridY) {

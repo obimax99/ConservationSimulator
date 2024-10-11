@@ -201,8 +201,9 @@ public class PlayScreen extends ScreenAdapter {
         // move loggers and check if they're dead or not
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
-            // move loggers with pathfinding
-            logger.update();
+            int loggerTileNum = logger.getCurrGridNum();
+            char direction = getCheapestDirection(loggerTileNum);
+            logger.update(delta, direction);
             // checking collisions here? loggers are responsible for taking damage from bees!
             if (logger.isDead()) { loggerIterator.remove(); }
         }
@@ -210,6 +211,7 @@ public class PlayScreen extends ScreenAdapter {
         if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
 
     }
+
 
     @Override
     public void render(float delta) {
@@ -344,7 +346,6 @@ public class PlayScreen extends ScreenAdapter {
         }
         loggerSpawnCount++;
         liveLoggers.add(logger.makeCopy(csGame, spawnGridX, spawnGridY));
-        System.out.println(spawnGridX + " " + spawnGridY);
     }
 
     public void resetWaves() {
@@ -389,6 +390,15 @@ public class PlayScreen extends ScreenAdapter {
         frogSpits.add(new FrogSpit(csGame, towerGridX, towerGridY, logger));
     }
 
+    private char getCheapestDirection(int loggerTileNum) {
+        int cheapestDirectionTileNum = grid[iVal(loggerTileNum)][jVal(loggerTileNum)].nextTileNum;
+        if (cheapestDirectionTileNum == loggerTileNum-1) { return 'L'; }
+        else if (cheapestDirectionTileNum == loggerTileNum+1) { return 'R'; }
+        else if (cheapestDirectionTileNum == loggerTileNum-GRID_SIZE) { return 'D'; }
+        else if (cheapestDirectionTileNum == loggerTileNum+GRID_SIZE) { return 'U'; }
+        return 'X'; // this should never happen
+    }
+
     public void doPathfinding() {
         boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
         Queue<Integer> vertexQueue = new LinkedList<Integer>();
@@ -404,24 +414,23 @@ public class PlayScreen extends ScreenAdapter {
         vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
         while (!vertexQueue.isEmpty()) {
             int vertexNum = vertexQueue.remove();
-            System.out.println(vertexNum);
             ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
             for (Integer wTileNum : adjTileNums) {
                 if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) { continue; } // this is to prevent overflow
-                grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(
-                        Math.min(grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost(),
-                                grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
-                                        grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost()));
+                if (grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                        grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() <
+                        grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost()) {
+                    grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                            grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost());
+                    grid[iVal(wTileNum)][jVal(wTileNum)].nextTileNum = vertexNum;
+                }
                 if (!visited[wTileNum]) {
                     visited[wTileNum] = true;
                     vertexQueue.add(wTileNum);
                 }
             }
         }
-
-
     }
-
     private int iVal(int tileNum) {return tileNum % GRID_SIZE; }
     private int jVal(int tileNum) {return tileNum / GRID_SIZE; }
 }

@@ -14,11 +14,13 @@ public class Tile extends Sprite {
     private int currentCost;
     public int tileNum;
     public ArrayList<Integer> adjTileNums;
+    public int nextTileNum;
 
     public Tile(Terrain terrain, int tileNum) {
         super(terrain.texture);
         this.terrain = terrain;
         this.tileNum = tileNum;
+        nextTileNum = tileNum;
         populateAdj();
     }
 
@@ -46,6 +48,5 @@ public class Tile extends Sprite {
         if (tileNum % GRID_SIZE != GRID_SIZE-1) {
             adjTileNums.add(tileNum+1);
         }
-        System.out.println(tileNum + ": " + adjTileNums);
     }
 }

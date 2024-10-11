@@ -23,7 +23,7 @@ public class Tower extends Sprite {
         this.setX(gridX*TILE_SIZE);
         this.setY(gridY*TILE_SIZE);
         this.health = 5;
-        this.range = 30;
+        this.range = 2;
         this.time_between_attacks = 1.0f;
         this.tower_attack_timer = 0.0f;
     }
