@@ -11,18 +11,17 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import static wsuv.cs.Constants.*;
+
 public class PlayScreen extends ScreenAdapter {
     // things that don't require logic
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
-    private final int NUM_WAVES = 150;
     private HUD hud;
     private SubState state;
     private int highScore;
     private int currentWave;
     private Terrain[] terrains;
-    private final int NUM_TERRAINS = 5;
-    private final int GRID_SIZE = 29;
     private Tile[][] grid;
     private int[][] setupGrid;
 
@@ -35,6 +34,7 @@ public class PlayScreen extends ScreenAdapter {
 
     // things that require logic
     private ArrayList<Tower> towers;
+    private ArrayList<FrogSpit> frogSpits;
 
 
     public PlayScreen(CSGame game) {
@@ -49,6 +49,7 @@ public class PlayScreen extends ScreenAdapter {
         getSetupGrid();
         grid = new Tile[GRID_SIZE][GRID_SIZE];
         towers = new ArrayList<>(1);
+        frogSpits = new ArrayList<>(5);
         setGrid();
 
         resetWaves();
@@ -127,8 +128,26 @@ public class PlayScreen extends ScreenAdapter {
         // ignore key presses when console is open...
         if (!hud.isOpen()) {
             // clicking
-
         }
+
+        // check to see which towers shoot
+        for (Tower tower : towers) {
+            // updates internal attack timers and maybe other stuff idk yet
+            tower.update(delta);
+            // if attack isn't ready OR nothing is in range, this method will return null
+            Logger targetedLogger = tower.attack(liveLoggers);
+            if (targetedLogger == null) { continue; }
+            // if we actually can shoot, then shoot at that logger
+            shootProjectile(tower.row, tower.col, targetedLogger);
+        }
+
+        // shoot those arrows
+        for (Iterator<FrogSpit> frogSpitIterator = frogSpits.iterator(); frogSpitIterator.hasNext();) {
+            FrogSpit frogSpit = frogSpitIterator.next();
+            if (frogSpit.update(delta)) { frogSpitIterator.remove(); }
+        }
+
+        // move loggers and check if they're dead or not
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
             // move loggers with pathfinding
@@ -169,6 +188,9 @@ public class PlayScreen extends ScreenAdapter {
         for (Tower tower : towers) {
             tower.draw(csGame.batch);
         }
+        for (FrogSpit frogSpit : frogSpits) {
+            frogSpit.draw(csGame.batch);
+        }
 
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
@@ -200,8 +222,8 @@ public class PlayScreen extends ScreenAdapter {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j] = new Tile(terrains[setupGrid[i][j]]);
-                grid[i][j].setX(i * 32);
-                grid[i][j].setY(j * 32);
+                grid[i][j].setX(i * TILE_SIZE);
+                grid[i][j].setY(j * TILE_SIZE);
             }
         }
         Tower tower = new Tower(csGame, GRID_SIZE/2, GRID_SIZE/2);
@@ -304,5 +326,9 @@ public class PlayScreen extends ScreenAdapter {
             totalLoggers.add(new Lumberjack(csGame, 0, 0));
         }
         if (skipWave) { timer = wave_time + 1; loggerSpawnCount =  currentWave+2; }
+    }
+
+    public void shootProjectile(int towerRow, int towerCol, Logger logger) {
+        frogSpits.add(new FrogSpit(csGame, towerRow, towerCol, logger));
     }
 }

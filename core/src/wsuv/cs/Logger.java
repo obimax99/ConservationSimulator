@@ -3,6 +3,8 @@ package wsuv.cs;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
+import static wsuv.cs.Constants.*;
+
 public abstract class Logger extends Sprite {
     // movement stuff is shared
     // health stuff being lowered is shared
@@ -21,10 +23,9 @@ public abstract class Logger extends Sprite {
     public void update() {
         // pathfinding
         // movement whatever who cares
-        // thankfully because 32 pixels is one tile and we know that, we can do shortcuts like this:
         // (at least until we do actual smooth movement haha)
-        setX(row*32);
-        setY(col*32);
+        setX(row*TILE_SIZE);
+        setY(col*TILE_SIZE);
     }
 
     protected void takeDamage(int damage) {
