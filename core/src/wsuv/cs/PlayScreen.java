@@ -34,6 +34,7 @@ public class PlayScreen extends ScreenAdapter {
 
     // things that require logic
     private ArrayList<Tower> towers;
+    private ArrayList<FrogSpit> frogSpits;
 
 
     public PlayScreen(CSGame game) {
@@ -48,6 +49,7 @@ public class PlayScreen extends ScreenAdapter {
         getSetupGrid();
         grid = new Tile[GRID_SIZE][GRID_SIZE];
         towers = new ArrayList<>(1);
+        frogSpits = new ArrayList<>(5);
         setGrid();
 
         resetWaves();
@@ -136,10 +138,14 @@ public class PlayScreen extends ScreenAdapter {
             Logger targetedLogger = tower.attack(liveLoggers);
             if (targetedLogger == null) { continue; }
             // if we actually can shoot, then shoot at that logger
-            shootProjectile(tower.row, tower.col, targetedLogger.row, targetedLogger.col);
+            shootProjectile(tower.row, tower.col, targetedLogger);
         }
 
         // shoot those arrows
+        for (Iterator<FrogSpit> frogSpitIterator = frogSpits.iterator(); frogSpitIterator.hasNext();) {
+            FrogSpit frogSpit = frogSpitIterator.next();
+            if (frogSpit.update(delta)) { frogSpitIterator.remove(); }
+        }
 
         // move loggers and check if they're dead or not
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
@@ -181,6 +187,9 @@ public class PlayScreen extends ScreenAdapter {
         // draw the entities
         for (Tower tower : towers) {
             tower.draw(csGame.batch);
+        }
+        for (FrogSpit frogSpit : frogSpits) {
+            frogSpit.draw(csGame.batch);
         }
 
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
@@ -319,7 +328,7 @@ public class PlayScreen extends ScreenAdapter {
         if (skipWave) { timer = wave_time + 1; loggerSpawnCount =  currentWave+2; }
     }
 
-    public void shootProjectile(int towerRow, int towerCol, int loggerRow, int loggerCol) {
-        System.out.println("shoot");
+    public void shootProjectile(int towerRow, int towerCol, Logger logger) {
+        frogSpits.add(new FrogSpit(csGame, towerRow, towerCol, logger));
     }
 }

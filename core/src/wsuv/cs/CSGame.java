@@ -23,6 +23,7 @@ public class CSGame extends Game{
     public static final String RSC_MONO_FONT = "JBM.ttf";
 
     public static final String RSC_FROGTOWER_IMG = "frogTower.png";
+    public static final String RSC_FROGSPIT_IMG = "frogSpit.png";
     public static final String RSC_BEE_IMG = "bee.png";
 
     public static final String RSC_LUMBERJACK_IMG = "lumberjack.png";
@@ -62,6 +63,7 @@ public class CSGame extends Game{
         am.load(RSC_PRESSAKEY_IMG, Texture.class);
 
         am.load(RSC_FROGTOWER_IMG, Texture.class);
+        am.load(RSC_FROGSPIT_IMG, Texture.class);
         am.load(RSC_BEE_IMG, Texture.class);
 
         am.load(RSC_LUMBERJACK_IMG, Texture.class);
