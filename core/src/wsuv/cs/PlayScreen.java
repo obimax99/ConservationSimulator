@@ -280,7 +280,7 @@ public class PlayScreen extends ScreenAdapter {
         // tiles
         for (int j = 0; j < GRID_SIZE; j++) {
             for (int i = 0; i < GRID_SIZE; i++) {
-                grid[i][j] = new Tile(terrains[setupGrid[i][j]], j*GRID_SIZE+i);
+                grid[i][j] = new Tile(csGame, terrains[setupGrid[i][j]], j*GRID_SIZE+i);
                 grid[i][j].setX(i * TILE_SIZE);
                 grid[i][j].setY(j * TILE_SIZE);
             }
