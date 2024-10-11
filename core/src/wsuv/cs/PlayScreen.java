@@ -1,11 +1,8 @@
 package wsuv.cs;
 
 import com.badlogic.gdx.*;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.util.ArrayList;
@@ -138,7 +135,7 @@ public class PlayScreen extends ScreenAdapter {
             Logger targetedLogger = tower.attack(liveLoggers);
             if (targetedLogger == null) { continue; }
             // if we actually can shoot, then shoot at that logger
-            shootProjectile(tower.row, tower.col, targetedLogger);
+            shootProjectile(tower.gridX, tower.gridY, targetedLogger);
         }
 
         // shoot those arrows
@@ -273,21 +270,21 @@ public class PlayScreen extends ScreenAdapter {
 
     public void spawnNextLogger() {
         Logger logger = totalLoggers.get(loggerSpawnCount);
-        int spawnRow = 0;
-        int spawnCol = 0;
+        int spawnGridY = 0;
+        int spawnGridX = 0;
         if(csGame.random.nextBoolean()) {
             // half the loggers spawn along the top and bottom rows
-            spawnRow = csGame.random.nextInt(2) * (GRID_SIZE-1);
-            spawnCol = csGame.random.nextInt(GRID_SIZE);
+            spawnGridX = csGame.random.nextInt(GRID_SIZE);
+            spawnGridY = csGame.random.nextInt(2) * (GRID_SIZE-1);
         }
         else {
             // and half along the left and right columns
-            spawnCol = csGame.random.nextInt(2) * (GRID_SIZE-1);
-            spawnRow = csGame.random.nextInt(GRID_SIZE);
+            spawnGridY = csGame.random.nextInt(GRID_SIZE);
+            spawnGridX = csGame.random.nextInt(2) * (GRID_SIZE-1);
         }
         loggerSpawnCount++;
-        liveLoggers.add(logger.makeCopy(csGame, spawnRow, spawnCol));
-        System.out.println(spawnRow + " " + spawnCol);
+        liveLoggers.add(logger.makeCopy(csGame, spawnGridX, spawnGridY));
+        System.out.println(spawnGridX + " " + spawnGridY);
     }
 
     public void resetWaves() {
@@ -328,7 +325,7 @@ public class PlayScreen extends ScreenAdapter {
         if (skipWave) { timer = wave_time + 1; loggerSpawnCount =  currentWave+2; }
     }
 
-    public void shootProjectile(int towerRow, int towerCol, Logger logger) {
-        frogSpits.add(new FrogSpit(csGame, towerRow, towerCol, logger));
+    public void shootProjectile(int towerGridX, int towerGridY, Logger logger) {
+        frogSpits.add(new FrogSpit(csGame, towerGridX, towerGridY, logger));
     }
 }
