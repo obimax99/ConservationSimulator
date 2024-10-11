@@ -9,6 +9,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static wsuv.cs.Constants.*;
 
@@ -44,7 +46,8 @@ public class PlayScreen extends ScreenAdapter {
         timer = 0;
         csGame = game;
         state = SubState.PLAYING;
-        DEBUG_pathfinding = false;
+        DEBUG_pathfinding = true;
+        DEBUG_borders = true;
         hud = new HUD(csGame.am.get(CSGame.RSC_MONO_FONT));
         FileHandle file = Gdx.files.internal("highscore.txt");
         highScore = Integer.parseInt(file.readString());
@@ -55,6 +58,7 @@ public class PlayScreen extends ScreenAdapter {
         towers = new ArrayList<>(1);
         frogSpits = new ArrayList<>(5);
         setGrid();
+        doPathfinding();
         font = csGame.am.get(CSGame.RSC_MONO_FONT);
         font.setColor(Color.WHITE);
 
@@ -171,6 +175,11 @@ public class PlayScreen extends ScreenAdapter {
         if (!hud.isOpen()) {
             // clicking
         }
+        // above is where upgrade and summons will go. If we summon something other than bees,
+        // then that means we need to call our pathfinding function!
+        // doPathfinding();
+        // also if trees grow or get cut down we need to redo pathfinding immediately.
+
 
         // check to see which towers shoot
         for (Tower tower : towers) {
@@ -224,7 +233,7 @@ public class PlayScreen extends ScreenAdapter {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j].draw(csGame.batch);
                 if (DEBUG_pathfinding) {
-                    font.draw(csGame.batch, Integer.toString(grid[i][j].getTerrainCost()), i*TILE_SIZE+10, j*TILE_SIZE+((float) TILE_SIZE /2));
+                    font.draw(csGame.batch, Integer.toString(grid[i][j].getCurrentCost()), i*TILE_SIZE+10, j*TILE_SIZE+((float) TILE_SIZE /2));
                 }
             }
         }
@@ -267,9 +276,9 @@ public class PlayScreen extends ScreenAdapter {
 
     public void setGrid() {
         // tiles
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                grid[i][j] = new Tile(terrains[setupGrid[i][j]]);
+        for (int j = 0; j < GRID_SIZE; j++) {
+            for (int i = 0; i < GRID_SIZE; i++) {
+                grid[i][j] = new Tile(terrains[setupGrid[i][j]], j*GRID_SIZE+i);
                 grid[i][j].setX(i * TILE_SIZE);
                 grid[i][j].setY(j * TILE_SIZE);
             }
@@ -379,4 +388,40 @@ public class PlayScreen extends ScreenAdapter {
     public void shootProjectile(int towerGridX, int towerGridY, Logger logger) {
         frogSpits.add(new FrogSpit(csGame, towerGridX, towerGridY, logger));
     }
+
+    public void doPathfinding() {
+        boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
+        Queue<Integer> vertexQueue = new LinkedList<Integer>();
+        for (int j = 0; j < GRID_SIZE; j++) {
+            for (int i = 0; i < GRID_SIZE; i++) {
+                grid[i][j].setCurrentCost(Integer.MAX_VALUE);
+            }
+        }
+
+        // this will repeat for every tower but for now lets just do one!
+        Tower tower = towers.get(0);
+        grid[tower.gridX][tower.gridY].setCurrentCost(0);
+        vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
+        while (!vertexQueue.isEmpty()) {
+            int vertexNum = vertexQueue.remove();
+            System.out.println(vertexNum);
+            ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
+            for (Integer wTileNum : adjTileNums) {
+                if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) { continue; } // this is to prevent overflow
+                grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(
+                        Math.min(grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost(),
+                                grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                                        grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost()));
+                if (!visited[wTileNum]) {
+                    visited[wTileNum] = true;
+                    vertexQueue.add(wTileNum);
+                }
+            }
+        }
+
+
+    }
+
+    private int iVal(int tileNum) {return tileNum % GRID_SIZE; }
+    private int jVal(int tileNum) {return tileNum / GRID_SIZE; }
 }
