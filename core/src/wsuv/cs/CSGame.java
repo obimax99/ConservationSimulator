@@ -31,6 +31,14 @@ public class CSGame extends Game{
     public static final String RSC_SHREDDER_IMG = "shredder.png";
 
     public static final String RSC_BORDERS_IMG = "borders.png";
+    public static final String RSC_BACKGROUNDUI_IMG = "backgroundUI.png";
+    public static final String RSC_HEALTHUPBUTTON_IMG = "healthUpButton.png";
+    public static final String RSC_RANGEUPBUTTON_IMG = "rangeUpButton.png";
+    public static final String RSC_ATKSPDUPBUTTON_IMG = "atkSpdUpButton.png";
+    public static final String RSC_SUMMONTREEBUTTON_IMG = "summonTreeButton.png";
+    public static final String RSC_SUMMONBEESBUTTON_IMG = "summonBeesButton.png";
+    public static final String RSC_SUMMONTOWERBUTTON_IMG = "summonTowerButton.png";
+
     public static final String RSC_GRASS_IMG = "grass.png";
     public static final String RSC_ROOTS_IMG = "roots.png";
     public static final String RSC_SHRUBS_IMG = "shrubs.png";
@@ -72,6 +80,14 @@ public class CSGame extends Game{
         am.load(RSC_SHREDDER_IMG, Texture.class);
 
         am.load(RSC_BORDERS_IMG, Texture.class);
+        am.load(RSC_BACKGROUNDUI_IMG, Texture.class);
+        am.load(RSC_HEALTHUPBUTTON_IMG, Texture.class);
+        am.load(RSC_RANGEUPBUTTON_IMG, Texture.class);
+        am.load(RSC_ATKSPDUPBUTTON_IMG, Texture.class);
+        am.load(RSC_SUMMONTREEBUTTON_IMG, Texture.class);
+        am.load(RSC_SUMMONBEESBUTTON_IMG, Texture.class);
+        am.load(RSC_SUMMONTOWERBUTTON_IMG, Texture.class);
+
         am.load(RSC_GRASS_IMG, Texture.class);
         am.load(RSC_ROOTS_IMG, Texture.class);
         am.load(RSC_SHRUBS_IMG, Texture.class);
