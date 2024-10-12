@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -17,6 +19,7 @@ import static wsuv.cs.Constants.*;
 public class PlayScreen extends ScreenAdapter {
     private boolean DEBUG_pathfinding;
     private boolean DEBUG_borders;
+    NumberFormat formatter = new DecimalFormat("0.00");
 
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
@@ -326,6 +329,13 @@ public class PlayScreen extends ScreenAdapter {
                 summonButton.draw(csGame.batch);
                 font.draw(csGame.batch, Integer.toString(summonCosts[summonButton.buttonNum]), summonButton.getX() + 100, summonButton.getY()+20);
             }
+        }
+        if (towerBeingUpgraded != null) {
+            font.setColor(Color.WHITE);
+
+            font.draw(csGame.batch, "Current Health: " + towerBeingUpgraded.getHealth(), 956,162 );
+            font.draw(csGame.batch, "Current Range: " + towerBeingUpgraded.getRange(), 960,414 );
+            font.draw(csGame.batch, "Current AtkSpd: " + formatter.format(towerBeingUpgraded.getAttackSpeed()), 944,666 );
         }
 
         hud.draw(csGame.batch);

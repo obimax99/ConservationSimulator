@@ -14,7 +14,7 @@ public class Tower extends Sprite {
     protected int gridX;
     private int maxHealth;
     private int health;
-    private final int healthIncreasePerUpgrade = 2;
+    private final int healthIncreasePerUpgrade = 1;
     private int range;
     private final int rangeIncreasePerUpgrade = 1;
     private float timeBetweenAttacks;
@@ -48,6 +48,14 @@ public class Tower extends Sprite {
         return (1 / timeBetweenAttacks);
     }
 
+    public int getHealth() {
+        return health;
+    }
+
+    public int getRange() {
+        return range;
+    }
+
     /*
     * Returns the logger that the tower is launching the attack at; PlayScreen will actually
     * instantiate the projectile and keep track of it, drawing it until it dies. The frog no
@@ -78,7 +86,6 @@ public class Tower extends Sprite {
         towerAttackTimer+=delta;
     }
 
-    // upgrade_health, upgrade_range, upgrade_attack_speed will be below
     public int upgradeHealth(int totalFertilizer) {
         if (totalFertilizer < upgradeCosts[0]) { return -1; }
         int remainingFertilizer = totalFertilizer - upgradeCosts[0];
