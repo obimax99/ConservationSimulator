@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -17,6 +19,7 @@ import static wsuv.cs.Constants.*;
 public class PlayScreen extends ScreenAdapter {
     private boolean DEBUG_pathfinding;
     private boolean DEBUG_borders;
+    NumberFormat formatter = new DecimalFormat("0.00");
 
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
@@ -41,9 +44,6 @@ public class PlayScreen extends ScreenAdapter {
     private ArrayList<FrogSpit> frogSpits;
 
     private ArrayList<CSButton> upgradeButtons;
-    private int[] upgradeCosts;
-    // this will probably be stored in each tower individually actually but
-    // that's for a future issue!
     private String[] upgradeButtonFuncs;
     private Tower towerBeingUpgraded;
     private ArrayList<CSButton> summonButtons;
@@ -197,6 +197,8 @@ public class PlayScreen extends ScreenAdapter {
                 // if a tower was clicked, go to upgrade screen and set that tower to the one being upgraded
                 // if nothing was clicked, go back to summon screen and set towerBeingUpgraded to null
                 if (buttonHit != null) { buttonFunc(func); }
+                // if this fails, perhaps we make it a boolean and then it will play a sound.
+                // also probably a success would make a sound
                 else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; }
                 else {
                     activateSummonButtons();
@@ -261,7 +263,10 @@ public class PlayScreen extends ScreenAdapter {
             char direction = getCheapestDirection(loggerTileNum);
             logger.update(delta, direction);
             // checking collisions here? loggers are responsible for taking damage from bees!
-            if (logger.isDead()) { loggerIterator.remove(); }
+            if (logger.isDead()) {
+                fertilizerCount = fertilizerCount + logger.damage; // stronger loggers drop more fertilizer!
+                loggerIterator.remove();
+            }
         }
         // if all the loggers are dead (after they've all been spawned!), then the wave has been beaten.
         if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
@@ -319,7 +324,7 @@ public class PlayScreen extends ScreenAdapter {
         for (CSButton upgradeButton : upgradeButtons) {
             if (upgradeButton.isActive()) {
                 upgradeButton.draw(csGame.batch);
-                font.draw(csGame.batch, Integer.toString(upgradeCosts[upgradeButton.buttonNum]), upgradeButton.getX() + 100, upgradeButton.getY()+20);
+                font.draw(csGame.batch, Integer.toString(towerBeingUpgraded.getUpgradeCost(upgradeButton.buttonNum)), upgradeButton.getX() + 100, upgradeButton.getY()+20);
             }
         }
         for (CSButton summonButton : summonButtons) {
@@ -327,6 +332,13 @@ public class PlayScreen extends ScreenAdapter {
                 summonButton.draw(csGame.batch);
                 font.draw(csGame.batch, Integer.toString(summonCosts[summonButton.buttonNum]), summonButton.getX() + 100, summonButton.getY()+20);
             }
+        }
+        if (towerBeingUpgraded != null) {
+            font.setColor(Color.WHITE);
+
+            font.draw(csGame.batch, "Current Health: " + towerBeingUpgraded.getHealth(), 956,162 );
+            font.draw(csGame.batch, "Current Range: " + towerBeingUpgraded.getRange(), 960,414 );
+            font.draw(csGame.batch, "Current AtkSpd: " + formatter.format(towerBeingUpgraded.getAttackSpeed()), 944,666 );
         }
 
         hud.draw(csGame.batch);
@@ -537,11 +549,7 @@ public class PlayScreen extends ScreenAdapter {
                 "upgradeRange",
                 "upgradeAtkSpd",
         };
-        upgradeCosts = new int[] { // definitely just placeholders for now obviously
-                1,
-                2,
-                3,
-        };
+        // upgrade costs are based on each individual tower
         final int NUM_BUTTONS_ON_SUMMON_SCREEN = 3;
         final Texture[] SUMMON_TEXTURES = new Texture[] {
                 csGame.am.get(CSGame.RSC_SUMMONTREEBUTTON_IMG, Texture.class),
@@ -609,15 +617,24 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public void upgradeHealth() {
-        System.out.println("upgrade health");
+        int newFertilizerCount = towerBeingUpgraded.upgradeHealth(fertilizerCount);
+        if (newFertilizerCount >= 0) {
+            fertilizerCount = newFertilizerCount;
+        }
     }
 
     public void upgradeRange() {
-        System.out.println("upgrade range");
+        int newFertilizerCount = towerBeingUpgraded.upgradeRange(fertilizerCount);
+        if (newFertilizerCount >= 0) {
+            fertilizerCount = newFertilizerCount;
+        }
     }
 
     public void upgradeAtkSpd() {
-        System.out.println("upgrade atk spd");
+        int newFertilizerCount = towerBeingUpgraded.upgradeAtkSpd(fertilizerCount);
+        if (newFertilizerCount >= 0) {
+            fertilizerCount = newFertilizerCount;
+        }
     }
 
     public void summonTree() {
