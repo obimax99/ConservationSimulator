@@ -263,7 +263,10 @@ public class PlayScreen extends ScreenAdapter {
             char direction = getCheapestDirection(loggerTileNum);
             logger.update(delta, direction);
             // checking collisions here? loggers are responsible for taking damage from bees!
-            if (logger.isDead()) { loggerIterator.remove(); }
+            if (logger.isDead()) {
+                fertilizerCount = fertilizerCount + logger.damage; // stronger loggers drop more fertilizer!
+                loggerIterator.remove();
+            }
         }
         // if all the loggers are dead (after they've all been spawned!), then the wave has been beaten.
         if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
