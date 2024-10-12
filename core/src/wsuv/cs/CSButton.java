@@ -4,16 +4,14 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
 public class CSButton extends Sprite {
-    public float width;
-    public float height;
     private boolean active;
+    public int buttonNum;
 
-    CSButton(Texture texture, float x, float y, float width, float height) {
+    CSButton(Texture texture, float x, float y, int buttonNum) {
         super(texture);
         setPosition(x, y);
-        this.width = width;
-        this.height = height;
         this.active = false;
+        this.buttonNum = buttonNum;
     }
 
     public boolean isActive() {
