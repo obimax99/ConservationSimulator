@@ -40,7 +40,8 @@ public class PlayScreen extends ScreenAdapter {
     // things that require logic
     private ArrayList<Tower> towers;
     private ArrayList<FrogSpit> frogSpits;
-
+    private ArrayList<CSButton> upgradeButtons;
+    private ArrayList<CSButton> summonButtons;
 
     public PlayScreen(CSGame game) {
         timer = 0;
@@ -64,6 +65,8 @@ public class PlayScreen extends ScreenAdapter {
 
         resetWaves();
         goNextWave(false);
+
+        bindButtons();
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -150,6 +153,16 @@ public class PlayScreen extends ScreenAdapter {
         InputMultiplexer multiplexer = new InputMultiplexer();
         // let the HUD's input processor handle things first....
         multiplexer.addProcessor(Gdx.input.getInputProcessor());
+        // idk if this is necessary if im not using keyboard input but whatever who cares
+        multiplexer.addProcessor(new InputAdapter() {
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                // first, see which button it hit (if any). towers are kind of buttons!
+                // if we click somewhere that isn't a button (and we aren't placing anything)
+                // then we should swap ensure we activate summon buttons.
+                return false;
+            }
+        });
         Gdx.input.setInputProcessor(multiplexer);
 
     }
@@ -239,9 +252,6 @@ public class PlayScreen extends ScreenAdapter {
                 }
             }
         }
-        if (DEBUG_borders) {
-            csGame.batch.draw(csGame.am.get(CSGame.RSC_BORDERS_IMG, Texture.class), 0, 0);
-        }
 
         // draw the entities
         for (Tower tower : towers) {
@@ -255,6 +265,18 @@ public class PlayScreen extends ScreenAdapter {
             Logger logger = loggerIterator.next();
             if (logger.isDead()) { loggerIterator.remove(); }
             else { logger.draw(csGame.batch); }
+        }
+
+        // draw UI elements
+        if (DEBUG_borders) {
+            csGame.batch.draw(csGame.am.get(CSGame.RSC_BORDERS_IMG, Texture.class), 0, 0);
+        }
+        csGame.batch.draw(csGame.am.get(CSGame.RSC_BACKGROUNDUI_IMG, Texture.class), 928, 0);
+        for (CSButton upgradeButton : upgradeButtons) {
+            if (upgradeButton.isActive()) upgradeButton.draw(csGame.batch);
+        }
+        for (CSButton summonButton : summonButtons) {
+            if (summonButton.isActive()) summonButton.draw(csGame.batch);
         }
 
         hud.draw(csGame.batch);
@@ -433,4 +455,107 @@ public class PlayScreen extends ScreenAdapter {
     }
     private int iVal(int tileNum) {return tileNum % GRID_SIZE; }
     private int jVal(int tileNum) {return tileNum / GRID_SIZE; }
+
+
+    /**
+     * 0 = HealthUpButton
+     * <p>
+     * 1 = RangeUpButton
+     * <p>
+     * 2 = AtkSpdUpButton
+     * <p>
+     * 3 = SummonTreeButton
+     * <p>
+     * 4 = SummonBeesButton
+     * <p>
+     * 5 = SummonTowerButton
+     * */
+    public void bindButtons() {
+
+        final int NUM_BUTTONS_ON_UPGRADE_SCREEN = 3;
+        final Texture[] UPGRADE_TEXTURES = new Texture[] {
+                csGame.am.get(CSGame.RSC_HEALTHUPBUTTON_IMG, Texture.class),
+                csGame.am.get(CSGame.RSC_RANGEUPBUTTON_IMG, Texture.class),
+                csGame.am.get(CSGame.RSC_ATKSPDUPBUTTON_IMG, Texture.class),
+        };
+        final int NUM_BUTTONS_ON_SUMMON_SCREEN = 3;
+        final Texture[] SUMMON_TEXTURES = new Texture[] {
+                csGame.am.get(CSGame.RSC_HEALTHUPBUTTON_IMG, Texture.class),
+                csGame.am.get(CSGame.RSC_RANGEUPBUTTON_IMG, Texture.class),
+                csGame.am.get(CSGame.RSC_ATKSPDUPBUTTON_IMG, Texture.class),
+        };
+
+        final float WIDTH_OF_BUTTONS = 128;
+        final float HEIGHT_OF_BUTTONS = 128;
+        final float WIDTH_OF_TOTAL_BUTTON_AREA = 178; // -7 on each side
+        final float HEIGHT_OF_TOTAL_BUTTON_AREA = 914; // -7 on each side
+        final float X_OF_BUTTON_AREA = 935; // game area + 7
+        final float Y_OF_BUTTON_AREA = 7; // 7 black bar
+        final float X_OF_BUTTONS = (X_OF_BUTTON_AREA + (WIDTH_OF_TOTAL_BUTTON_AREA/2) - (WIDTH_OF_BUTTONS/2));
+        float yBetweenButtons;
+        float yOfFirstButton;
+        float spaceBetweenButtons;
+
+        upgradeButtons = new ArrayList<CSButton>(NUM_BUTTONS_ON_UPGRADE_SCREEN);
+        spaceBetweenButtons = (HEIGHT_OF_TOTAL_BUTTON_AREA - (NUM_BUTTONS_ON_UPGRADE_SCREEN * HEIGHT_OF_BUTTONS)) / (NUM_BUTTONS_ON_UPGRADE_SCREEN + 1);
+        yBetweenButtons = spaceBetweenButtons + HEIGHT_OF_BUTTONS;
+        yOfFirstButton = spaceBetweenButtons + Y_OF_BUTTON_AREA;
+        for (int ii = 0; ii < NUM_BUTTONS_ON_UPGRADE_SCREEN; ii++) {
+            upgradeButtons.add(new CSButton(UPGRADE_TEXTURES[ii], X_OF_BUTTONS, yOfFirstButton +(yBetweenButtons *ii), WIDTH_OF_BUTTONS, HEIGHT_OF_BUTTONS));
+        }
+
+        summonButtons = new ArrayList<CSButton>(NUM_BUTTONS_ON_SUMMON_SCREEN);
+        spaceBetweenButtons = (HEIGHT_OF_TOTAL_BUTTON_AREA - (NUM_BUTTONS_ON_SUMMON_SCREEN * HEIGHT_OF_BUTTONS)) / (NUM_BUTTONS_ON_SUMMON_SCREEN + 1);
+        yBetweenButtons = spaceBetweenButtons + HEIGHT_OF_BUTTONS;
+        yOfFirstButton = spaceBetweenButtons + Y_OF_BUTTON_AREA;
+        for (int ii = 0; ii < NUM_BUTTONS_ON_SUMMON_SCREEN; ii++) {
+            summonButtons.add(new CSButton(SUMMON_TEXTURES[ii], X_OF_BUTTONS, yOfFirstButton +(yBetweenButtons *ii), WIDTH_OF_BUTTONS, HEIGHT_OF_BUTTONS));
+        }
+
+        activateSummonButtons(); // these are on by default; clicking a tower should swap it to upgrade
+
+    }
+
+    public void activateSummonButtons() {
+        for (CSButton button : summonButtons) {
+            button.activate();
+        }
+        for (CSButton button : upgradeButtons) {
+            button.deactivate();
+        }
+    }
+
+    public void activateUpgradeButtons() {
+        for (CSButton button : upgradeButtons) {
+            button.activate();
+        }
+        for (CSButton button : summonButtons) {
+            button.deactivate();
+        }
+    }
+
+    public void summonTree() {
+        System.out.println("summon tree");
+    }
+
+    public void summonBees() {
+        System.out.println("summon bees");
+    }
+
+    public void summonTower() {
+        System.out.println("summon tower");
+    }
+
+    public void upgradeHealth() {
+        System.out.println("upgrade health");
+    }
+
+    public void upgradeRange() {
+        System.out.println("upgrade range");
+    }
+
+    public void upgradeAtkSpd() {
+        System.out.println("upgrade atk spd");
+    }
+
 }
