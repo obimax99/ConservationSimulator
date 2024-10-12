@@ -3,10 +3,11 @@
 - **[2]** Loggers and Waves
 - **[3]** Towers shooting
 - **[4]** Refactor
+- **[5]** Pathfinding
 
 ## Open Issues ##
-- **[5]** Pathfinding
-- **[6]** Tower upgrades
-- **[7]** Summoning
-- **[8]** Summons/Logger interactions
-- **[9]** Polish UI
+- **[6]** Summon/Upgrade UI Buttons
+- **[7]** Tower upgrades
+- **[8]** Summoning
+- **[9]** Summons/Logger interactions
+- **[10]** Polish UI
