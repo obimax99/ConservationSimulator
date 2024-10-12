@@ -250,7 +250,7 @@ public class HUD {
             }
         }
         // draw HUD Data every frame...
-        font.setColor(Color.WHITE);
+        font.setColor(Color.BLACK);
         font.draw(batch, hudDataBuffer.toString(), xlocation, Gdx.graphics.getHeight() - yMargin);
     }
 

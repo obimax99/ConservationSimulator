@@ -2,20 +2,28 @@ package wsuv.cs;
 
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static wsuv.cs.Constants.*;
 
 public class PlayScreen extends ScreenAdapter {
+    private boolean DEBUG_pathfinding;
+    private boolean DEBUG_borders;
+
     // things that don't require logic
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
     private HUD hud;
     private SubState state;
+    private BitmapFont font;
     private int highScore;
     private int currentWave;
     private Terrain[] terrains;
@@ -38,6 +46,8 @@ public class PlayScreen extends ScreenAdapter {
         timer = 0;
         csGame = game;
         state = SubState.PLAYING;
+        DEBUG_pathfinding = true;
+        DEBUG_borders = true;
         hud = new HUD(csGame.am.get(CSGame.RSC_MONO_FONT));
         FileHandle file = Gdx.files.internal("highscore.txt");
         highScore = Integer.parseInt(file.readString());
@@ -48,6 +58,9 @@ public class PlayScreen extends ScreenAdapter {
         towers = new ArrayList<>(1);
         frogSpits = new ArrayList<>(5);
         setGrid();
+        doPathfinding();
+        font = csGame.am.get(CSGame.RSC_MONO_FONT);
+        font.setColor(Color.WHITE);
 
         resetWaves();
         goNextWave(false);
@@ -58,7 +71,7 @@ public class PlayScreen extends ScreenAdapter {
 
         // HUD Console Commands
         hud.registerAction("wave", new HUDActionCommand() {
-            static final String help = "Usage: wave <x> ";
+            static final String help = "Switch to a specific wave. Usage: wave <x> ";
 
             @Override
             public String execute(String[] cmd) {
@@ -70,6 +83,42 @@ public class PlayScreen extends ScreenAdapter {
                         goNextWave(true);
                     }
                     goNextWave(false);
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("pathfinding", new HUDActionCommand() {
+            static final String help = "Toggle pathfinding debug. Usage: pathfinding ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    DEBUG_pathfinding = !DEBUG_pathfinding;
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("borders", new HUDActionCommand() {
+            static final String help = "Toggle borders debug. Usage: borders ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    DEBUG_borders = !DEBUG_borders;
                     return "ok!";
                 } catch (Exception e) {
                     return help;
@@ -126,6 +175,11 @@ public class PlayScreen extends ScreenAdapter {
         if (!hud.isOpen()) {
             // clicking
         }
+        // above is where upgrade and summons will go. If we summon something other than bees,
+        // then that means we need to call our pathfinding function!
+        // doPathfinding();
+        // also if trees grow or get cut down we need to redo pathfinding immediately.
+
 
         // check to see which towers shoot
         for (Tower tower : towers) {
@@ -147,8 +201,9 @@ public class PlayScreen extends ScreenAdapter {
         // move loggers and check if they're dead or not
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
-            // move loggers with pathfinding
-            logger.update();
+            int loggerTileNum = logger.getCurrGridNum();
+            char direction = getCheapestDirection(loggerTileNum);
+            logger.update(delta, direction);
             // checking collisions here? loggers are responsible for taking damage from bees!
             if (logger.isDead()) { loggerIterator.remove(); }
         }
@@ -156,6 +211,7 @@ public class PlayScreen extends ScreenAdapter {
         if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
 
     }
+
 
     @Override
     public void render(float delta) {
@@ -178,7 +234,13 @@ public class PlayScreen extends ScreenAdapter {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j].draw(csGame.batch);
+                if (DEBUG_pathfinding) {
+                    font.draw(csGame.batch, Integer.toString(grid[i][j].getCurrentCost()), i*TILE_SIZE+10, j*TILE_SIZE+((float) TILE_SIZE /2));
+                }
             }
+        }
+        if (DEBUG_borders) {
+            csGame.batch.draw(csGame.am.get(CSGame.RSC_BORDERS_IMG, Texture.class), 0, 0);
         }
 
         // draw the entities
@@ -216,9 +278,9 @@ public class PlayScreen extends ScreenAdapter {
 
     public void setGrid() {
         // tiles
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                grid[i][j] = new Tile(terrains[setupGrid[i][j]]);
+        for (int j = 0; j < GRID_SIZE; j++) {
+            for (int i = 0; i < GRID_SIZE; i++) {
+                grid[i][j] = new Tile(csGame, terrains[setupGrid[i][j]], j*GRID_SIZE+i);
                 grid[i][j].setX(i * TILE_SIZE);
                 grid[i][j].setY(j * TILE_SIZE);
             }
@@ -238,8 +300,8 @@ public class PlayScreen extends ScreenAdapter {
         setupGrid = new int[][]{
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0},
-                {0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0},
@@ -247,10 +309,10 @@ public class PlayScreen extends ScreenAdapter {
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
+                {0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
                 {0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -259,11 +321,11 @@ public class PlayScreen extends ScreenAdapter {
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         };
     }
@@ -284,7 +346,6 @@ public class PlayScreen extends ScreenAdapter {
         }
         loggerSpawnCount++;
         liveLoggers.add(logger.makeCopy(csGame, spawnGridX, spawnGridY));
-        System.out.println(spawnGridX + " " + spawnGridY);
     }
 
     public void resetWaves() {
@@ -328,4 +389,48 @@ public class PlayScreen extends ScreenAdapter {
     public void shootProjectile(int towerGridX, int towerGridY, Logger logger) {
         frogSpits.add(new FrogSpit(csGame, towerGridX, towerGridY, logger));
     }
+
+    private char getCheapestDirection(int loggerTileNum) {
+        int cheapestDirectionTileNum = grid[iVal(loggerTileNum)][jVal(loggerTileNum)].nextTileNum;
+        if (cheapestDirectionTileNum == loggerTileNum-1) { return 'L'; }
+        else if (cheapestDirectionTileNum == loggerTileNum+1) { return 'R'; }
+        else if (cheapestDirectionTileNum == loggerTileNum-GRID_SIZE) { return 'D'; }
+        else if (cheapestDirectionTileNum == loggerTileNum+GRID_SIZE) { return 'U'; }
+        return 'X'; // this should never happen
+    }
+
+    public void doPathfinding() {
+        boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
+        Queue<Integer> vertexQueue = new LinkedList<Integer>();
+        for (int j = 0; j < GRID_SIZE; j++) {
+            for (int i = 0; i < GRID_SIZE; i++) {
+                grid[i][j].setCurrentCost(Integer.MAX_VALUE);
+            }
+        }
+
+        // this will repeat for every tower but for now lets just do one!
+        Tower tower = towers.get(0);
+        grid[tower.gridX][tower.gridY].setCurrentCost(0);
+        vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
+        while (!vertexQueue.isEmpty()) {
+            int vertexNum = vertexQueue.remove();
+            ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
+            for (Integer wTileNum : adjTileNums) {
+                if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) { continue; } // this is to prevent overflow
+                if (grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                        grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() <
+                        grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost()) {
+                    grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                            grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost());
+                    grid[iVal(wTileNum)][jVal(wTileNum)].nextTileNum = vertexNum;
+                }
+                if (!visited[wTileNum]) {
+                    visited[wTileNum] = true;
+                    vertexQueue.add(wTileNum);
+                }
+            }
+        }
+    }
+    private int iVal(int tileNum) {return tileNum % GRID_SIZE; }
+    private int jVal(int tileNum) {return tileNum / GRID_SIZE; }
 }
