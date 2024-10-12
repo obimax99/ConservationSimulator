@@ -18,18 +18,18 @@ public class PlayScreen extends ScreenAdapter {
     private boolean DEBUG_pathfinding;
     private boolean DEBUG_borders;
 
-    // things that don't require logic
     private enum SubState {READY, GAME_OVER, PLAYING}
     private CSGame csGame;
     private HUD hud;
     private SubState state;
     private BitmapFont font;
+
     private int highScore;
     private int currentWave;
+
     private Terrain[] terrains;
     private Tile[][] grid;
     private int[][] setupGrid;
-
     private float timer;
     private float wave_time;
     private float time_between_spawns;
@@ -37,14 +37,19 @@ public class PlayScreen extends ScreenAdapter {
     private ArrayList<Logger> totalLoggers;
     private int loggerSpawnCount;
 
-    // things that require logic
     private ArrayList<Tower> towers;
     private ArrayList<FrogSpit> frogSpits;
+
     private ArrayList<CSButton> upgradeButtons;
+    private int[] upgradeCosts;
+    // this will probably be stored in each tower individually actually but
+    // that's for a future issue!
     private String[] upgradeButtonFuncs;
     private Tower towerBeingUpgraded;
     private ArrayList<CSButton> summonButtons;
+    private int[] summonCosts;
     private String[] summonButtonFuncs;
+    private int fertilizerCount;
 
     public PlayScreen(CSGame game) {
         timer = 0;
@@ -71,6 +76,7 @@ public class PlayScreen extends ScreenAdapter {
 
         bindButtons();
         towerBeingUpgraded = null;
+        fertilizerCount = 500; // for now
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -164,6 +170,8 @@ public class PlayScreen extends ScreenAdapter {
                 // first, see which button it hit (if any). towers are kind of buttons!
                 // if we click somewhere that isn't a button (and we aren't placing anything)
                 // then we should swap ensure we activate summon buttons.
+                // stupid coordinate system is backwards so lets fix that
+                screenY = 928-screenY;
                 CSButton buttonHit = null;
                 Tower towerHit = null;
                 String func = null;
@@ -307,11 +315,18 @@ public class PlayScreen extends ScreenAdapter {
             csGame.batch.draw(csGame.am.get(CSGame.RSC_BORDERS_IMG, Texture.class), 0, 0);
         }
         csGame.batch.draw(csGame.am.get(CSGame.RSC_BACKGROUNDUI_IMG, Texture.class), 928, 0);
+        font.draw(csGame.batch, Integer.toString(fertilizerCount), 1024, 28);
         for (CSButton upgradeButton : upgradeButtons) {
-            if (upgradeButton.isActive()) upgradeButton.draw(csGame.batch);
+            if (upgradeButton.isActive()) {
+                upgradeButton.draw(csGame.batch);
+                font.draw(csGame.batch, Integer.toString(upgradeCosts[upgradeButton.buttonNum]), upgradeButton.getX() + 100, upgradeButton.getY()+20);
+            }
         }
         for (CSButton summonButton : summonButtons) {
-            if (summonButton.isActive()) summonButton.draw(csGame.batch);
+            if (summonButton.isActive()) {
+                summonButton.draw(csGame.batch);
+                font.draw(csGame.batch, Integer.toString(summonCosts[summonButton.buttonNum]), summonButton.getX() + 100, summonButton.getY()+20);
+            }
         }
 
         hud.draw(csGame.batch);
@@ -517,10 +532,15 @@ public class PlayScreen extends ScreenAdapter {
                 csGame.am.get(CSGame.RSC_RANGEUPBUTTON_IMG, Texture.class),
                 csGame.am.get(CSGame.RSC_ATKSPDUPBUTTON_IMG, Texture.class),
         };
-        upgradeButtonFuncs = new String[]{
+        upgradeButtonFuncs = new String[] {
                 "upgradeHealth",
                 "upgradeRange",
                 "upgradeAtkSpd",
+        };
+        upgradeCosts = new int[] { // definitely just placeholders for now obviously
+                1,
+                2,
+                3,
         };
         final int NUM_BUTTONS_ON_SUMMON_SCREEN = 3;
         final Texture[] SUMMON_TEXTURES = new Texture[] {
@@ -528,18 +548,23 @@ public class PlayScreen extends ScreenAdapter {
                 csGame.am.get(CSGame.RSC_SUMMONBEESBUTTON_IMG, Texture.class),
                 csGame.am.get(CSGame.RSC_SUMMONTOWERBUTTON_IMG, Texture.class),
         };
-        summonButtonFuncs = new String[]{
+        summonButtonFuncs = new String[] {
                 "summonTree",
                 "summonBees",
                 "summonTower",
+        };
+        summonCosts = new int[] {
+                4,
+                5,
+                6,
         };
 
         final float WIDTH_OF_BUTTONS = 128;
         final float HEIGHT_OF_BUTTONS = 128;
         final float WIDTH_OF_TOTAL_BUTTON_AREA = 178; // -7 on each side
-        final float HEIGHT_OF_TOTAL_BUTTON_AREA = 914; // -7 on each side
+        final float HEIGHT_OF_TOTAL_BUTTON_AREA = 882; // -7 on each side -32 fertilizer count
         final float X_OF_BUTTON_AREA = 935; // game area + 7
-        final float Y_OF_BUTTON_AREA = 7; // 7 black bar
+        final float Y_OF_BUTTON_AREA = 39; // 7 black bar + 32 fertilizer count
         final float X_OF_BUTTONS = (X_OF_BUTTON_AREA + (WIDTH_OF_TOTAL_BUTTON_AREA/2) - (WIDTH_OF_BUTTONS/2));
         float yBetweenButtons;
         float yOfFirstButton;
