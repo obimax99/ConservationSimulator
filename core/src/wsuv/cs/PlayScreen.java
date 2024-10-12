@@ -50,6 +50,9 @@ public class PlayScreen extends ScreenAdapter {
     private int[] summonCosts;
     private String[] summonButtonFuncs;
     private int fertilizerCount;
+    private boolean summoningTree;
+    private boolean summoningBees;
+    private boolean summoningTower;
 
     public PlayScreen(CSGame game) {
         timer = 0;
@@ -172,6 +175,8 @@ public class PlayScreen extends ScreenAdapter {
                 // then we should swap ensure we activate summon buttons.
                 // stupid coordinate system is backwards so lets fix that
                 screenY = 928-screenY;
+                int gridX = screenX / TILE_SIZE;
+                int gridY = screenY / TILE_SIZE;
                 CSButton buttonHit = null;
                 Tower towerHit = null;
                 String func = null;
@@ -200,9 +205,16 @@ public class PlayScreen extends ScreenAdapter {
                 // if this fails, perhaps we make it a boolean and then it will play a sound.
                 // also probably a success would make a sound
                 else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; }
+                // there's another option: we clicked a space after hitting a summon button to summon!
+                else if (summoningTree) { createTree(gridX, gridY); }
+                else if (summoningBees) { createBees(gridX, gridY); }
+                else if (summoningTower) { createTower(gridX, gridY); }
                 else {
                     activateSummonButtons();
                     towerBeingUpgraded = null;
+                    summoningTree = false;
+                    summoningBees = false;
+                    summoningTower = false;
                     return false;
                 }
                 return true;
@@ -638,17 +650,65 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public void summonTree() {
-        System.out.println("summon tree");
+        int newFertilizerCount = fertilizerCount-summonCosts[0];
+        if (newFertilizerCount < 0) return;
+        summoningTree = true;
+        summoningBees = false;
+        summoningTower = false;
+        fertilizerCount = newFertilizerCount;
     }
 
     public void summonBees() {
-        System.out.println("summon bees");
+        int newFertilizerCount = fertilizerCount-summonCosts[1];
+        if (newFertilizerCount < 0) return;
+        summoningTree = false;
+        summoningBees = true;
+        summoningTower = false;
+        fertilizerCount = newFertilizerCount;
     }
 
     public void summonTower() {
-        System.out.println("summon tower");
+        int newFertilizerCount = fertilizerCount-summonCosts[2];
+        if (newFertilizerCount < 0) return;
+        summoningTree = false;
+        summoningBees = false;
+        summoningTower = true;
+        fertilizerCount = newFertilizerCount;
     }
 
+    public void createTree(int gridX, int gridY) {
+        summoningTree = false;
+        if (!validateGridSpace(gridX, gridY)) { return; }
+        System.out.println("tree");
+    }
+
+    public void createBees(int gridX, int gridY) {
+        summoningBees = false;
+        if (!validateGridSpace(gridX, gridY)) { return; }
+        System.out.println("bees");
+    }
+
+    public void createTower(int gridX, int gridY) {
+        summoningTower = false;
+        if (!validateGridSpace(gridX, gridY)) { return; }
+        System.out.println("tower");
+    }
+
+    public boolean validateGridSpace(int gridX, int gridY) {
+        // can't summon on shrubs or trees or rocks:
+        if (grid[gridX][gridY].terrain == terrains[2] || grid[gridX][gridY].terrain == terrains[3] || grid[gridX][gridY].terrain == terrains[4]) { return false; }
+        // cannot summon on top of bees or loggers or towers-- not sure how to do bees just yet!
+        // loggers:
+        for (Logger logger : liveLoggers) {
+            if (logger.gridX == gridX && logger.gridY == gridY) { return false; }
+        }
+        // towers:
+        if (grid[gridX][gridY].getCurrentCost() == 0) { return false; }
+        // bees:?
+        // if grid.hasBees()?
+        // otherwise, this grid is fine to go on!
+        return true;
+    }
     public void buttonFunc(String func) {
         switch (func) {
             case "upgradeHealth":
