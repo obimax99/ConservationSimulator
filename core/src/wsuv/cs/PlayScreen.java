@@ -51,6 +51,7 @@ public class PlayScreen extends ScreenAdapter {
     private String[] summonButtonFuncs;
     private int fertilizerCount;
     private boolean summoningTree;
+    private ArrayList<ShrubTree> shrubTrees;
     private boolean summoningBees;
     private boolean summoningTower;
 
@@ -72,7 +73,6 @@ public class PlayScreen extends ScreenAdapter {
         setGrid();
         doPathfinding();
         font = csGame.am.get(CSGame.RSC_MONO_FONT);
-        font.setColor(Color.WHITE);
 
         resetWaves();
         goNextWave(false);
@@ -80,6 +80,7 @@ public class PlayScreen extends ScreenAdapter {
         bindButtons();
         towerBeingUpgraded = null;
         fertilizerCount = 500; // for now
+        shrubTrees = new ArrayList<ShrubTree>(16);
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -249,6 +250,13 @@ public class PlayScreen extends ScreenAdapter {
         // then that means we need to call our pathfinding function!
         // doPathfinding();
         // also if trees grow or get cut down we need to redo pathfinding immediately.
+        for (ShrubTree shrubTree : shrubTrees) {
+            if (shrubTree.update(delta)) {
+                System.out.println(grid[shrubTree.gridX][shrubTree.gridY].terrain);
+                grid[shrubTree.gridX][shrubTree.gridY].setNewTerrain(terrains[3]);
+                doPathfinding();
+            }
+        }
 
 
         // check to see which towers shoot
@@ -289,7 +297,7 @@ public class PlayScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         update(delta);
-
+        font.setColor(Color.WHITE);
         ScreenUtils.clear(0, 0, 0, 1);
         csGame.batch.begin();
         switch (state) {
@@ -346,13 +354,12 @@ public class PlayScreen extends ScreenAdapter {
             }
         }
         if (towerBeingUpgraded != null) {
-            font.setColor(Color.WHITE);
-
             font.draw(csGame.batch, "Current Health: " + towerBeingUpgraded.getHealth(), 956,162 );
             font.draw(csGame.batch, "Current Range: " + towerBeingUpgraded.getRange(), 960,414 );
             font.draw(csGame.batch, "Current AtkSpd: " + formatter.format(towerBeingUpgraded.getAttackSpeed()), 944,666 );
         }
 
+        font.setColor(Color.BLACK);
         hud.draw(csGame.batch);
         csGame.batch.end();
     }
@@ -679,7 +686,10 @@ public class PlayScreen extends ScreenAdapter {
     public void createTree(int gridX, int gridY) {
         summoningTree = false;
         if (!validateGridSpace(gridX, gridY)) { return; }
-        System.out.println("tree");
+        if (grid[gridX][gridY].terrain == terrains[1]) { fertilizerCount++; } // get a little refund if planting on roots
+        shrubTrees.add(new ShrubTree(gridX, gridY));
+        grid[gridX][gridY].setNewTerrain(terrains[2]);
+        doPathfinding();
     }
 
     public void createBees(int gridX, int gridY) {

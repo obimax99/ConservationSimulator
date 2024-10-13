@@ -24,6 +24,11 @@ public class Tile extends Sprite {
         populateAdj(game);
     }
 
+    public void setNewTerrain(Terrain terrain) {
+        this.terrain = terrain;
+        setTexture(terrain.texture);
+    }
+
     public int getTerrainCost() { return terrain.cost; }
 
     public int getCurrentCost() { return currentCost; }
