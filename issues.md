@@ -6,8 +6,9 @@
 - **[5]** Pathfinding
 - **[6]** Summon/Upgrade UI Buttons
 - **[7]** Tower upgrades
+- **[8]** Summoning
 
 ## Open Issues ##
-- **[8]** Summoning
-- **[9]** Summons/Logger interactions
-- **[10]** Polish UI
+- **[9]** Logger animation + redesign
+- **[10]** Summons/Logger interactions
+- **[11]** Polish UI
