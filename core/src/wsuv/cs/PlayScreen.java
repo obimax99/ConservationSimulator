@@ -32,6 +32,7 @@ public class PlayScreen extends ScreenAdapter {
 
     private Terrain[] terrains;
     private Tile[][] grid;
+    private Bees[][] beeGrid;
     private int[][] setupGrid;
     private float timer;
     private float wave_time;
@@ -50,6 +51,10 @@ public class PlayScreen extends ScreenAdapter {
     private int[] summonCosts;
     private String[] summonButtonFuncs;
     private int fertilizerCount;
+    private boolean summoningTree;
+    private ArrayList<ShrubTree> shrubTrees;
+    private boolean summoningBees;
+    private boolean summoningTower;
 
     public PlayScreen(CSGame game) {
         timer = 0;
@@ -64,12 +69,12 @@ public class PlayScreen extends ScreenAdapter {
         setTerrainTypes();
         getSetupGrid();
         grid = new Tile[GRID_SIZE][GRID_SIZE];
+        beeGrid = new Bees[GRID_SIZE][GRID_SIZE];
         towers = new ArrayList<>(1);
         frogSpits = new ArrayList<>(5);
         setGrid();
         doPathfinding();
         font = csGame.am.get(CSGame.RSC_MONO_FONT);
-        font.setColor(Color.WHITE);
 
         resetWaves();
         goNextWave(false);
@@ -77,6 +82,7 @@ public class PlayScreen extends ScreenAdapter {
         bindButtons();
         towerBeingUpgraded = null;
         fertilizerCount = 500; // for now
+        shrubTrees = new ArrayList<ShrubTree>(16);
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -172,6 +178,8 @@ public class PlayScreen extends ScreenAdapter {
                 // then we should swap ensure we activate summon buttons.
                 // stupid coordinate system is backwards so lets fix that
                 screenY = 928-screenY;
+                int gridX = screenX / TILE_SIZE;
+                int gridY = screenY / TILE_SIZE;
                 CSButton buttonHit = null;
                 Tower towerHit = null;
                 String func = null;
@@ -200,9 +208,16 @@ public class PlayScreen extends ScreenAdapter {
                 // if this fails, perhaps we make it a boolean and then it will play a sound.
                 // also probably a success would make a sound
                 else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; }
+                // there's another option: we clicked a space after hitting a summon button to summon!
+                else if (summoningTree) { createTree(gridX, gridY); }
+                else if (summoningBees) { createBees(gridX, gridY); }
+                else if (summoningTower) { createTower(gridX, gridY); }
                 else {
                     activateSummonButtons();
                     towerBeingUpgraded = null;
+                    summoningTree = false;
+                    summoningBees = false;
+                    summoningTower = false;
                     return false;
                 }
                 return true;
@@ -237,6 +252,13 @@ public class PlayScreen extends ScreenAdapter {
         // then that means we need to call our pathfinding function!
         // doPathfinding();
         // also if trees grow or get cut down we need to redo pathfinding immediately.
+        for (ShrubTree shrubTree : shrubTrees) {
+            if (shrubTree.update(delta)) {
+                System.out.println(grid[shrubTree.gridX][shrubTree.gridY].terrain);
+                grid[shrubTree.gridX][shrubTree.gridY].setNewTerrain(terrains[3]);
+                doPathfinding();
+            }
+        }
 
 
         // check to see which towers shoot
@@ -260,6 +282,13 @@ public class PlayScreen extends ScreenAdapter {
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
             int loggerTileNum = logger.getCurrGridNum();
+            // if the logger steps on a bee, ruh roh!
+            Bees possibleBee = beeGrid[iVal(loggerTileNum)][jVal(loggerTileNum)];
+            if (possibleBee != null) {
+                logger.takeDamage(possibleBee.damage);
+                // bee dies too though :(
+                beeGrid[iVal(loggerTileNum)][jVal(loggerTileNum)] = null;
+            }
             char direction = getCheapestDirection(loggerTileNum);
             logger.update(delta, direction);
             // checking collisions here? loggers are responsible for taking damage from bees!
@@ -277,7 +306,7 @@ public class PlayScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         update(delta);
-
+        font.setColor(Color.WHITE);
         ScreenUtils.clear(0, 0, 0, 1);
         csGame.batch.begin();
         switch (state) {
@@ -295,6 +324,7 @@ public class PlayScreen extends ScreenAdapter {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j].draw(csGame.batch);
+                if (beeGrid[i][j] != null) {beeGrid[i][j].draw(csGame.batch); }
                 if (DEBUG_pathfinding) {
                     font.draw(csGame.batch, Integer.toString(grid[i][j].getCurrentCost()), i*TILE_SIZE+10, j*TILE_SIZE+((float) TILE_SIZE /2));
                 }
@@ -334,13 +364,12 @@ public class PlayScreen extends ScreenAdapter {
             }
         }
         if (towerBeingUpgraded != null) {
-            font.setColor(Color.WHITE);
-
             font.draw(csGame.batch, "Current Health: " + towerBeingUpgraded.getHealth(), 956,162 );
             font.draw(csGame.batch, "Current Range: " + towerBeingUpgraded.getRange(), 960,414 );
             font.draw(csGame.batch, "Current AtkSpd: " + formatter.format(towerBeingUpgraded.getAttackSpeed()), 944,666 );
         }
 
+        font.setColor(Color.BLACK);
         hud.draw(csGame.batch);
         csGame.batch.end();
     }
@@ -484,7 +513,6 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public void doPathfinding() {
-        boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
         Queue<Integer> vertexQueue = new LinkedList<Integer>();
         for (int j = 0; j < GRID_SIZE; j++) {
             for (int i = 0; i < GRID_SIZE; i++) {
@@ -493,24 +521,28 @@ public class PlayScreen extends ScreenAdapter {
         }
 
         // this will repeat for every tower but for now lets just do one!
-        Tower tower = towers.get(0);
-        grid[tower.gridX][tower.gridY].setCurrentCost(0);
-        vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
-        while (!vertexQueue.isEmpty()) {
-            int vertexNum = vertexQueue.remove();
-            ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
-            for (Integer wTileNum : adjTileNums) {
-                if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) { continue; } // this is to prevent overflow
-                if (grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
-                        grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() <
-                        grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost()) {
-                    grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
-                            grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost());
-                    grid[iVal(wTileNum)][jVal(wTileNum)].nextTileNum = vertexNum;
-                }
-                if (!visited[wTileNum]) {
-                    visited[wTileNum] = true;
-                    vertexQueue.add(wTileNum);
+        for (Tower tower : towers) {
+            boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
+            grid[tower.gridX][tower.gridY].setCurrentCost(0);
+            vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
+            while (!vertexQueue.isEmpty()) {
+                int vertexNum = vertexQueue.remove();
+                ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
+                for (Integer wTileNum : adjTileNums) {
+                    if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) {
+                        continue;
+                    } // this is to prevent overflow
+                    if (grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                            grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() <
+                            grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost()) {
+                        grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                                grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost());
+                        grid[iVal(wTileNum)][jVal(wTileNum)].nextTileNum = vertexNum;
+                    }
+                    if (!visited[wTileNum]) {
+                        visited[wTileNum] = true;
+                        vertexQueue.add(wTileNum);
+                    }
                 }
             }
         }
@@ -563,8 +595,8 @@ public class PlayScreen extends ScreenAdapter {
         };
         summonCosts = new int[] {
                 4,
-                5,
-                6,
+                3,
+                12,
         };
 
         final float WIDTH_OF_BUTTONS = 128;
@@ -638,17 +670,69 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public void summonTree() {
-        System.out.println("summon tree");
+        int newFertilizerCount = fertilizerCount-summonCosts[0];
+        if (newFertilizerCount < 0) return;
+        summoningTree = true;
+        summoningBees = false;
+        summoningTower = false;
+        fertilizerCount = newFertilizerCount;
     }
 
     public void summonBees() {
-        System.out.println("summon bees");
+        int newFertilizerCount = fertilizerCount-summonCosts[1];
+        if (newFertilizerCount < 0) return;
+        summoningTree = false;
+        summoningBees = true;
+        summoningTower = false;
+        fertilizerCount = newFertilizerCount;
     }
 
     public void summonTower() {
-        System.out.println("summon tower");
+        int newFertilizerCount = fertilizerCount-summonCosts[2];
+        if (newFertilizerCount < 0) return;
+        summoningTree = false;
+        summoningBees = false;
+        summoningTower = true;
+        fertilizerCount = newFertilizerCount;
     }
 
+    public void createTree(int gridX, int gridY) {
+        summoningTree = false;
+        if (!validateGridSpace(gridX, gridY)) { return; }
+        if (grid[gridX][gridY].terrain == terrains[1]) { fertilizerCount++; } // get a little refund if planting on roots
+        shrubTrees.add(new ShrubTree(gridX, gridY));
+        grid[gridX][gridY].setNewTerrain(terrains[2]);
+        doPathfinding();
+    }
+
+    public void createBees(int gridX, int gridY) {
+        summoningBees = false;
+        if (!validateGridSpace(gridX, gridY)) { return; }
+        beeGrid[gridX][gridY] = new Bees(csGame, gridX, gridY);
+    }
+
+    public void createTower(int gridX, int gridY) {
+        summoningTower = false;
+        if (!validateGridSpace(gridX, gridY)) { return; }
+        towers.add(new Tower(csGame, gridX, gridY));
+        doPathfinding();
+    }
+
+    public boolean validateGridSpace(int gridX, int gridY) {
+        // can't summon on shrubs or trees or rocks:
+        if (grid[gridX][gridY].terrain == terrains[2] || grid[gridX][gridY].terrain == terrains[3] || grid[gridX][gridY].terrain == terrains[4]) { return false; }
+        // cannot summon on top of bees or loggers or towers-- not sure how to do bees just yet!
+        // loggers:
+        for (Logger logger : liveLoggers) {
+            if (logger.gridX == gridX && logger.gridY == gridY) { return false; }
+        }
+        // towers:
+        if (grid[gridX][gridY].getCurrentCost() == 0) { return false; }
+        // bees:
+        if (beeGrid[gridX][gridY] != null) { return false; }
+        // otherwise, this grid is fine to go on!
+        return true;
+    }
     public void buttonFunc(String func) {
         switch (func) {
             case "upgradeHealth":
