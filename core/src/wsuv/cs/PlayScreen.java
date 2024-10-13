@@ -513,7 +513,6 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public void doPathfinding() {
-        boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
         Queue<Integer> vertexQueue = new LinkedList<Integer>();
         for (int j = 0; j < GRID_SIZE; j++) {
             for (int i = 0; i < GRID_SIZE; i++) {
@@ -522,24 +521,28 @@ public class PlayScreen extends ScreenAdapter {
         }
 
         // this will repeat for every tower but for now lets just do one!
-        Tower tower = towers.get(0);
-        grid[tower.gridX][tower.gridY].setCurrentCost(0);
-        vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
-        while (!vertexQueue.isEmpty()) {
-            int vertexNum = vertexQueue.remove();
-            ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
-            for (Integer wTileNum : adjTileNums) {
-                if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) { continue; } // this is to prevent overflow
-                if (grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
-                        grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() <
-                        grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost()) {
-                    grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
-                            grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost());
-                    grid[iVal(wTileNum)][jVal(wTileNum)].nextTileNum = vertexNum;
-                }
-                if (!visited[wTileNum]) {
-                    visited[wTileNum] = true;
-                    vertexQueue.add(wTileNum);
+        for (Tower tower : towers) {
+            boolean[] visited = new boolean[GRID_SIZE*GRID_SIZE];
+            grid[tower.gridX][tower.gridY].setCurrentCost(0);
+            vertexQueue.add(grid[tower.gridX][tower.gridY].tileNum);
+            while (!vertexQueue.isEmpty()) {
+                int vertexNum = vertexQueue.remove();
+                ArrayList<Integer> adjTileNums = grid[iVal(vertexNum)][jVal(vertexNum)].adjTileNums;
+                for (Integer wTileNum : adjTileNums) {
+                    if (grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() == Integer.MAX_VALUE) {
+                        continue;
+                    } // this is to prevent overflow
+                    if (grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                            grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost() <
+                            grid[iVal(wTileNum)][jVal(wTileNum)].getCurrentCost()) {
+                        grid[iVal(wTileNum)][jVal(wTileNum)].setCurrentCost(grid[iVal(vertexNum)][jVal(vertexNum)].getCurrentCost() +
+                                grid[iVal(wTileNum)][jVal(wTileNum)].getTerrainCost());
+                        grid[iVal(wTileNum)][jVal(wTileNum)].nextTileNum = vertexNum;
+                    }
+                    if (!visited[wTileNum]) {
+                        visited[wTileNum] = true;
+                        vertexQueue.add(wTileNum);
+                    }
                 }
             }
         }
@@ -711,7 +714,8 @@ public class PlayScreen extends ScreenAdapter {
     public void createTower(int gridX, int gridY) {
         summoningTower = false;
         if (!validateGridSpace(gridX, gridY)) { return; }
-        System.out.println("tower");
+        towers.add(new Tower(csGame, gridX, gridY));
+        doPathfinding();
     }
 
     public boolean validateGridSpace(int gridX, int gridY) {

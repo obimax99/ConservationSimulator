@@ -18,8 +18,8 @@ public class FrogSpit extends Sprite {
         super(game.am.get("frogSpit.png", Texture.class));
         this.target = logger;
         this.damage = 1;
-        setX(startGridY*TILE_SIZE);
-        setY(startGridX*TILE_SIZE);
+        setX(startGridX*TILE_SIZE);
+        setY(startGridY*TILE_SIZE);
 
         // get normalized vector
         setVelocity();
