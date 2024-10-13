@@ -32,6 +32,7 @@ public class PlayScreen extends ScreenAdapter {
 
     private Terrain[] terrains;
     private Tile[][] grid;
+    private Bees[][] beeGrid;
     private int[][] setupGrid;
     private float timer;
     private float wave_time;
@@ -68,6 +69,7 @@ public class PlayScreen extends ScreenAdapter {
         setTerrainTypes();
         getSetupGrid();
         grid = new Tile[GRID_SIZE][GRID_SIZE];
+        beeGrid = new Bees[GRID_SIZE][GRID_SIZE];
         towers = new ArrayList<>(1);
         frogSpits = new ArrayList<>(5);
         setGrid();
@@ -280,6 +282,13 @@ public class PlayScreen extends ScreenAdapter {
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
             int loggerTileNum = logger.getCurrGridNum();
+            // if the logger steps on a bee, ruh roh!
+            Bees possibleBee = beeGrid[iVal(loggerTileNum)][jVal(loggerTileNum)];
+            if (possibleBee != null) {
+                logger.takeDamage(possibleBee.damage);
+                // bee dies too though :(
+                beeGrid[iVal(loggerTileNum)][jVal(loggerTileNum)] = null;
+            }
             char direction = getCheapestDirection(loggerTileNum);
             logger.update(delta, direction);
             // checking collisions here? loggers are responsible for taking damage from bees!
@@ -315,6 +324,7 @@ public class PlayScreen extends ScreenAdapter {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 grid[i][j].draw(csGame.batch);
+                if (beeGrid[i][j] != null) {beeGrid[i][j].draw(csGame.batch); }
                 if (DEBUG_pathfinding) {
                     font.draw(csGame.batch, Integer.toString(grid[i][j].getCurrentCost()), i*TILE_SIZE+10, j*TILE_SIZE+((float) TILE_SIZE /2));
                 }
@@ -582,8 +592,8 @@ public class PlayScreen extends ScreenAdapter {
         };
         summonCosts = new int[] {
                 4,
-                5,
-                6,
+                3,
+                12,
         };
 
         final float WIDTH_OF_BUTTONS = 128;
@@ -695,7 +705,7 @@ public class PlayScreen extends ScreenAdapter {
     public void createBees(int gridX, int gridY) {
         summoningBees = false;
         if (!validateGridSpace(gridX, gridY)) { return; }
-        System.out.println("bees");
+        beeGrid[gridX][gridY] = new Bees(csGame, gridX, gridY);
     }
 
     public void createTower(int gridX, int gridY) {
@@ -714,8 +724,8 @@ public class PlayScreen extends ScreenAdapter {
         }
         // towers:
         if (grid[gridX][gridY].getCurrentCost() == 0) { return false; }
-        // bees:?
-        // if grid.hasBees()?
+        // bees:
+        if (beeGrid[gridX][gridY] != null) { return false; }
         // otherwise, this grid is fine to go on!
         return true;
     }
