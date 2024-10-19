@@ -8,8 +8,10 @@ import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
@@ -29,6 +31,7 @@ public class CSGame extends Game{
     public static final String RSC_LUMBERJACK_IMG = "lumberjack.png";
     public static final String RSC_BULLDOZER_IMG = "bulldozer.png";
     public static final String RSC_SHREDDER_IMG = "shredder.png";
+    public static Texture walkSheet;
 
     public static final String RSC_BORDERS_IMG = "borders.png";
     public static final String RSC_BACKGROUNDUI_IMG = "backgroundUI.png";
@@ -49,11 +52,30 @@ public class CSGame extends Game{
     AssetManager am;  // AssetManager provides a single source for loaded resources
     SpriteBatch batch;
     Random random = new Random();
+    Animation<TextureRegion> walkDownAnimation;
+    Animation<TextureRegion> walkLeftAnimation;
+    Animation<TextureRegion> walkRightAnimation;
+    Animation<TextureRegion> walkUpAnimation;
 
 
     @Override
     public void create() {
         am = new AssetManager();
+
+        walkSheet = new Texture(Gdx.files.internal("lumberjackSprites.png"));
+        TextureRegion[][] tmp = TextureRegion.split(walkSheet,
+                walkSheet.getWidth() / 4,
+                walkSheet.getHeight() / 4);
+
+        TextureRegion[] walkDownFrames = setTextureRegion(tmp, 0);
+        TextureRegion[] walkLeftFrames = setTextureRegion(tmp, 1);
+        TextureRegion[] walkRightFrames = setTextureRegion(tmp, 2);
+        TextureRegion[] walkUpFrames = setTextureRegion(tmp, 3);
+
+        walkDownAnimation = new Animation<TextureRegion>(0.1f, walkDownFrames);
+        walkLeftAnimation = new Animation<TextureRegion>(0.1f, walkLeftFrames);
+        walkRightAnimation = new Animation<TextureRegion>(0.1f, walkRightFrames);
+        walkUpAnimation = new Animation<TextureRegion>(0.1f, walkUpFrames);
 
 		/* True Type Fonts are a bit of a pain. We need to tell the AssetManager
            a bit more than simply the file name in order to get them into an
@@ -110,5 +132,15 @@ public class CSGame extends Game{
     public void dispose() {
         batch.dispose();
         am.dispose();
+        walkSheet.dispose();
+    }
+
+    public TextureRegion[] setTextureRegion(TextureRegion[][] tmp, int row) {
+        TextureRegion[] frames = new TextureRegion[4];
+        int index = 0;
+        for (int i = 0; i < 4; i++) {
+            frames[index++] = tmp[row][i];
+        }
+        return frames;
     }
 }

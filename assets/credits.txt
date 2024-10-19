@@ -7,3 +7,8 @@
   JetBrainsMono*.ttf fonts
   https://www.jetbrains.com/lp/mono/
   free/opensource no credit required
+
+  Maicerochico [base sprite]
+  Looker Sprite Sheet
+  https://www.deviantart.com/maicerochico/art/Platinum-Looker-Overworld-Sprites-Ripped-651961803
+  free/opensource no credit required
