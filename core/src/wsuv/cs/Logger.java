@@ -1,7 +1,9 @@
 package wsuv.cs;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import static wsuv.cs.Constants.*;
 
@@ -16,6 +18,12 @@ public abstract class Logger extends Sprite {
     private boolean dead;
     private float xVelocity;
     private float yVelocity;
+    protected Animation<TextureRegion> walkDownAnimation;
+    protected Animation<TextureRegion> walkLeftAnimation;
+    protected Animation<TextureRegion> walkRightAnimation;
+    protected Animation<TextureRegion> walkUpAnimation;
+    protected Animation<TextureRegion> currentAnimation;
+    private float stateTime;
 
     Logger(Texture texture, int gridX, int gridY) {
         super(texture);
@@ -24,31 +32,39 @@ public abstract class Logger extends Sprite {
         this.gridY = gridY;
         setX(gridX*TILE_SIZE);
         setY(gridY*TILE_SIZE);
+        this.stateTime = 0;
     }
 
     public void update(float delta, char direction) {
         float x = getX();
         float y = getY();
+        stateTime+=delta;
         switch (direction) {
             case 'L':
                 if (notThereYetY(y)) break;
+                currentAnimation = walkLeftAnimation;
                 xVelocity = -1 * MOVE_SPEED;
                 break;
             case 'R':
                 if (notThereYetY(y)) break;
+                currentAnimation = walkRightAnimation;
                 xVelocity = MOVE_SPEED;
                 break;
             case 'D':
                 if (notThereYetX(x)) break;
+                currentAnimation = walkDownAnimation;
                 yVelocity = -1 * MOVE_SPEED;
                 break;
             case 'U':
                 if (notThereYetX(x)) break;
+                currentAnimation = walkUpAnimation;
                 yVelocity = MOVE_SPEED;
                 break;
             default:
                 break;
         }
+        TextureRegion currentFrame = currentAnimation.getKeyFrame(stateTime, true);
+        setRegion(currentFrame);
         setX(getX() + delta * xVelocity);
         setY(getY() + delta * yVelocity);
     }

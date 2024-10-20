@@ -5,18 +5,18 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
 
 import java.util.Random;
 
-public class CSGame extends Game{
+public class CSGame extends Game {
     public static final String RSC_GAMEOVER_IMG = "gameover.png";
     public static final String RSC_PRESSAKEY_IMG = "pressakey.png";
     public static final String RSC_MONO_FONT_FILE = "JetBrainsMono-Regular.ttf";
@@ -29,6 +29,9 @@ public class CSGame extends Game{
     public static final String RSC_LUMBERJACK_IMG = "lumberjack.png";
     public static final String RSC_BULLDOZER_IMG = "bulldozer.png";
     public static final String RSC_SHREDDER_IMG = "shredder.png";
+    public static Texture lumberjackWalkSheet;
+    public static Texture bulldozerWalkSheet;
+    public static Texture shredderWalkSheet;
 
     public static final String RSC_BORDERS_IMG = "borders.png";
     public static final String RSC_BACKGROUNDUI_IMG = "backgroundUI.png";
@@ -50,10 +53,71 @@ public class CSGame extends Game{
     SpriteBatch batch;
     Random random = new Random();
 
+    Animation<TextureRegion> lumberjackWalkDownAnimation;
+    Animation<TextureRegion> lumberjackWalkLeftAnimation;
+    Animation<TextureRegion> lumberjackWalkRightAnimation;
+    Animation<TextureRegion> lumberjackWalkUpAnimation;
+
+    Animation<TextureRegion> bulldozerWalkDownAnimation;
+    Animation<TextureRegion> bulldozerWalkLeftAnimation;
+    Animation<TextureRegion> bulldozerWalkRightAnimation;
+    Animation<TextureRegion> bulldozerWalkUpAnimation;
+
+    Animation<TextureRegion> shredderWalkDownAnimation;
+    Animation<TextureRegion> shredderWalkLeftAnimation;
+    Animation<TextureRegion> shredderWalkRightAnimation;
+    Animation<TextureRegion> shredderWalkUpAnimation;
 
     @Override
     public void create() {
         am = new AssetManager();
+
+        lumberjackWalkSheet = new Texture(Gdx.files.internal("lumberjackSprites.png"));
+        TextureRegion[][] lumberjackTmp = TextureRegion.split(lumberjackWalkSheet,
+                lumberjackWalkSheet.getWidth() / 4,
+                lumberjackWalkSheet.getHeight() / 4);
+
+        TextureRegion[] lumberjackWalkDownFrames = setTextureRegion(lumberjackTmp, 0);
+        TextureRegion[] lumberjackWalkLeftFrames = setTextureRegion(lumberjackTmp, 1);
+        TextureRegion[] lumberjackWalkRightFrames = setTextureRegion(lumberjackTmp, 2);
+        TextureRegion[] lumberjackWalkUpFrames = setTextureRegion(lumberjackTmp, 3);
+
+        lumberjackWalkDownAnimation = new Animation<TextureRegion>(0.1f, lumberjackWalkDownFrames);
+        lumberjackWalkLeftAnimation = new Animation<TextureRegion>(0.1f, lumberjackWalkLeftFrames);
+        lumberjackWalkRightAnimation = new Animation<TextureRegion>(0.1f, lumberjackWalkRightFrames);
+        lumberjackWalkUpAnimation = new Animation<TextureRegion>(0.1f, lumberjackWalkUpFrames);
+
+
+        bulldozerWalkSheet = new Texture(Gdx.files.internal("bulldozerSprites.png"));
+        TextureRegion[][] bulldozerTmp = TextureRegion.split(bulldozerWalkSheet,
+                bulldozerWalkSheet.getWidth() / 4,
+                bulldozerWalkSheet.getHeight() / 4);
+
+        TextureRegion[] bulldozerWalkDownFrames = setTextureRegion(bulldozerTmp, 0);
+        TextureRegion[] bulldozerWalkLeftFrames = setTextureRegion(bulldozerTmp, 1);
+        TextureRegion[] bulldozerWalkRightFrames = setTextureRegion(bulldozerTmp, 2);
+        TextureRegion[] bulldozerWalkUpFrames = setTextureRegion(bulldozerTmp, 3);
+
+        bulldozerWalkDownAnimation = new Animation<TextureRegion>(0.1f, bulldozerWalkDownFrames);
+        bulldozerWalkLeftAnimation = new Animation<TextureRegion>(0.1f, bulldozerWalkLeftFrames);
+        bulldozerWalkRightAnimation = new Animation<TextureRegion>(0.1f, bulldozerWalkRightFrames);
+        bulldozerWalkUpAnimation = new Animation<TextureRegion>(0.1f, bulldozerWalkUpFrames);
+
+
+        shredderWalkSheet = new Texture(Gdx.files.internal("shredderSprites.png"));
+        TextureRegion[][] shredderTmp = TextureRegion.split(shredderWalkSheet,
+                shredderWalkSheet.getWidth() / 4,
+                shredderWalkSheet.getHeight() / 4);
+
+        TextureRegion[] shredderWalkDownFrames = setTextureRegion(shredderTmp, 0);
+        TextureRegion[] shredderWalkLeftFrames = setTextureRegion(shredderTmp, 1);
+        TextureRegion[] shredderWalkRightFrames = setTextureRegion(shredderTmp, 2);
+        TextureRegion[] shredderWalkUpFrames = setTextureRegion(shredderTmp, 3);
+
+        shredderWalkDownAnimation = new Animation<TextureRegion>(0.1f, shredderWalkDownFrames);
+        shredderWalkLeftAnimation = new Animation<TextureRegion>(0.1f, shredderWalkLeftFrames);
+        shredderWalkRightAnimation = new Animation<TextureRegion>(0.1f, shredderWalkRightFrames);
+        shredderWalkUpAnimation = new Animation<TextureRegion>(0.1f, shredderWalkUpFrames);
 
 		/* True Type Fonts are a bit of a pain. We need to tell the AssetManager
            a bit more than simply the file name in order to get them into an
@@ -110,5 +174,17 @@ public class CSGame extends Game{
     public void dispose() {
         batch.dispose();
         am.dispose();
+        lumberjackWalkSheet.dispose();
+        bulldozerWalkSheet.dispose();
+        shredderWalkSheet.dispose();
+    }
+
+    public TextureRegion[] setTextureRegion(TextureRegion[][] tmp, int row) {
+        TextureRegion[] frames = new TextureRegion[4];
+        int index = 0;
+        for (int i = 0; i < 4; i++) {
+            frames[index++] = tmp[row][i];
+        }
+        return frames;
     }
 }
