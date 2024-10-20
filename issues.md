@@ -7,8 +7,8 @@
 - **[6]** Summon/Upgrade UI Buttons
 - **[7]** Tower upgrades
 - **[8]** Summoning
+- **[9]** Logger animation + redesign
 
 ## Open Issues ##
-- **[9]** Logger animation + redesign
 - **[10]** Summons/Logger interactions
 - **[11]** Polish UI
