@@ -38,10 +38,11 @@ public class VictoryScreen extends ScreenAdapter {
         update(delta);
         ScreenUtils.clear(0, 0, 0, 1);
         csGame.batch.begin();
-        font.draw(csGame.batch, "Final Score (this should be the maximum unless you CHEATED): ", 100, 400);
+        font.setColor(Color.WHITE);
+        font.draw(csGame.batch, "Final Score: ", 500, 400);
         font.draw(csGame.batch, Integer.toString(score), 600, 400);
         csGame.batch.draw(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class), 200, 150);
-        font.draw(csGame.batch, "You Win! Yippee!", 375, 150);
+        font.draw(csGame.batch, "Your forest of friends lives on in our hearts <3", 375, 150);
         csGame.batch.end();
     }
 }

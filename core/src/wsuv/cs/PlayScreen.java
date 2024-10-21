@@ -149,6 +149,24 @@ public class PlayScreen extends ScreenAdapter {
             }
         });
 
+        hud.registerAction("endGame", new HUDActionCommand() {
+            static final String help = "End game. Usage: endGame ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    endGame();
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
         // HUD Data
         hud.registerView("High Score:", new HUDViewCommand(HUDViewCommand.Visibility.WHEN_OPEN) {
             @Override
@@ -262,7 +280,18 @@ public class PlayScreen extends ScreenAdapter {
 
 
         // check to see which towers shoot
-        for (Tower tower : towers) {
+        for (Iterator<Tower> towerIterator = towers.iterator(); towerIterator.hasNext();) {
+            Tower tower = towerIterator.next();
+            // check if loggers are on top of it
+            for (Logger logger : liveLoggers) {
+                if (logger.gridX == tower.gridX && logger.gridY == tower.gridY) {
+                    // if the logger is already on top of the tower, then the tower takes damage and the logger dies
+                    tower.takeDamage(logger.damage);
+                    logger.takeDamage(logger.damage); //guaranteed to kill logger
+                    if (tower.isDead) { towerIterator.remove(); doPathfinding(); continue; }
+                    // need to check here so that we don't kill extra loggers
+                }
+            }
             // updates internal attack timers and maybe other stuff idk yet
             tower.update(delta);
             // if attack isn't ready OR nothing is in range, this method will return null
@@ -271,6 +300,9 @@ public class PlayScreen extends ScreenAdapter {
             // if we actually can shoot, then shoot at that logger
             shootProjectile(tower.gridX, tower.gridY, targetedLogger);
         }
+
+        // if all towers have been destroyed, RIP-- that's the game.
+        if (towers.isEmpty()) { endGame(); }
 
         // shoot those arrows
         for (Iterator<FrogSpit> frogSpitIterator = frogSpits.iterator(); frogSpitIterator.hasNext();) {
@@ -291,7 +323,6 @@ public class PlayScreen extends ScreenAdapter {
             }
             char direction = getCheapestDirection(loggerTileNum);
             logger.update(delta, direction);
-            // checking collisions here? loggers are responsible for taking damage from bees!
             if (logger.isDead()) {
                 fertilizerCount = fertilizerCount + logger.damage; // stronger loggers drop more fertilizer!
                 loggerIterator.remove();
@@ -759,6 +790,17 @@ public class PlayScreen extends ScreenAdapter {
         }
     }
 
+    public void endGame() {
+        if (fertilizerCount > highScore) {
+            FileHandle file = Gdx.files.local("highscore.txt");
+            file.writeString(Integer.toString(fertilizerCount), false);  // write the high score
+        }
+        csGame.setScreen(new VictoryScreen(csGame, fertilizerCount));
+    }
 
+    @Override
+    public void dispose() {
+        Gdx.input.setInputProcessor(null);
+    }
 
 }
