@@ -9,10 +9,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import static wsuv.cs.Constants.*;
 
@@ -60,8 +57,8 @@ public class PlayScreen extends ScreenAdapter {
         timer = 0;
         csGame = game;
         state = SubState.PLAYING;
-        DEBUG_pathfinding = true;
-        DEBUG_borders = true;
+        DEBUG_pathfinding = false;
+        DEBUG_borders = false;
         hud = new HUD(csGame.am.get(CSGame.RSC_MONO_FONT));
         FileHandle file = Gdx.files.internal("highscore.txt");
         highScore = Integer.parseInt(file.readString());
@@ -156,6 +153,46 @@ public class PlayScreen extends ScreenAdapter {
             public String execute(String[] cmd) {
                 try {
                     endGame();
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("fertilizer", new HUDActionCommand() {
+            static final String help = "Set fertilizer amount. Usage: fertilizer <x> ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    int x = Integer.parseInt(cmd[1]);
+                    if (x < 0) return "Fertilizer can't be negative";
+                    fertilizerCount = x;
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("debug", new HUDActionCommand() {
+            static final String help = "Toggle debug views on or off. Usage: debug on || debug off ";
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    String x = cmd[1];
+                    if (!(Objects.equals(x, "on") || Objects.equals(x, "off"))) return help;
+                    if (x.equals("on")) { DEBUG_borders = true; DEBUG_pathfinding = true; }
+                    else if (x.equals("off")) { DEBUG_borders = false; DEBUG_pathfinding = false; }
                     return "ok!";
                 } catch (Exception e) {
                     return help;
