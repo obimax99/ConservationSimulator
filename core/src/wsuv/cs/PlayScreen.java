@@ -314,6 +314,7 @@ public class PlayScreen extends ScreenAdapter {
             Logger logger = loggerIterator.next();
             int preUpdateTileNum = logger.getGridNumBeforeUpdating();
             int loggerTileNum = logger.getCurrGridNum();
+            logger.changeMoveSpeed(grid[iVal(preUpdateTileNum)][jVal(preUpdateTileNum)].getTerrainCost());
             if (preUpdateTileNum != loggerTileNum) { // then we literally just left that tile!
                 // if we left shrub or tree, then chop it down and leave roots
                 for (Iterator<ShrubTree> shrubTreeIterator = shrubTrees.iterator(); shrubTreeIterator.hasNext();) {
