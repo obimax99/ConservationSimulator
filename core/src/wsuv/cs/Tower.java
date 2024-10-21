@@ -14,6 +14,7 @@ public class Tower extends Sprite {
     protected int gridX;
     private int maxHealth;
     private int health;
+    public boolean isDead;
     private final int healthIncreasePerUpgrade = 1;
     private int range;
     private final int rangeIncreasePerUpgrade = 1;
@@ -29,6 +30,7 @@ public class Tower extends Sprite {
         this.setY(gridY*TILE_SIZE);
         this.health = 5;
         this.maxHealth = health;
+        this.isDead = false;
         this.range = 5;
         this.timeBetweenAttacks = 1.0f;
         this.towerAttackTimer = 0.0f;
@@ -114,5 +116,10 @@ public class Tower extends Sprite {
 
     public int getUpgradeCost(int buttonNum) {
         return upgradeCosts[buttonNum];
+    }
+
+    public void takeDamage(int damage) {
+        health -= damage;
+        if (health <= 0) { isDead = true; }
     }
 }

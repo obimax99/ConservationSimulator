@@ -2,6 +2,7 @@ package wsuv.cs;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
@@ -177,6 +178,21 @@ public class CSGame extends Game {
         lumberjackWalkSheet.dispose();
         bulldozerWalkSheet.dispose();
         shredderWalkSheet.dispose();
+    }
+
+    @Override
+    public void setScreen(Screen screen) {
+        if (this.screen != null) {
+            this.screen.hide();
+            this.screen.dispose();
+        }
+
+        this.screen = screen;
+        if (this.screen != null) {
+            this.screen.show();
+            this.screen.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        }
+
     }
 
     public TextureRegion[] setTextureRegion(TextureRegion[][] tmp, int row) {

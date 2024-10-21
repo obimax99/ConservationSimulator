@@ -14,7 +14,8 @@ public abstract class Logger extends Sprite {
     protected int damage;
     protected int gridX;
     protected int gridY;
-    public final float MOVE_SPEED = 64;
+    public final float BASE_MOVE_SPEED = 128;
+    public float moveSpeed;
     private boolean dead;
     private float xVelocity;
     private float yVelocity;
@@ -33,6 +34,7 @@ public abstract class Logger extends Sprite {
         setX(gridX*TILE_SIZE);
         setY(gridY*TILE_SIZE);
         this.stateTime = 0;
+        this.moveSpeed = BASE_MOVE_SPEED;
     }
 
     public void update(float delta, char direction) {
@@ -43,22 +45,22 @@ public abstract class Logger extends Sprite {
             case 'L':
                 if (notThereYetY(y)) break;
                 currentAnimation = walkLeftAnimation;
-                xVelocity = -1 * MOVE_SPEED;
+                xVelocity = -1 * moveSpeed;
                 break;
             case 'R':
                 if (notThereYetY(y)) break;
                 currentAnimation = walkRightAnimation;
-                xVelocity = MOVE_SPEED;
+                xVelocity = moveSpeed;
                 break;
             case 'D':
                 if (notThereYetX(x)) break;
                 currentAnimation = walkDownAnimation;
-                yVelocity = -1 * MOVE_SPEED;
+                yVelocity = -1 * moveSpeed;
                 break;
             case 'U':
                 if (notThereYetX(x)) break;
                 currentAnimation = walkUpAnimation;
-                yVelocity = MOVE_SPEED;
+                yVelocity = moveSpeed;
                 break;
             default:
                 break;
@@ -117,6 +119,10 @@ public abstract class Logger extends Sprite {
         return false;
     }
 
+    public int getGridNumBeforeUpdating() {
+        return gridY*GRID_SIZE+gridX;
+    }
+
     public int getCurrGridNum() {
         // determine which grid tile the logger is actually in:
         // if the x value is greater than half of the gridX, update gridX.
@@ -149,5 +155,9 @@ public abstract class Logger extends Sprite {
     public boolean isDead() { return dead; }
 
     public abstract Logger makeCopy(CSGame game, int gridX, int gridY);
+
+    public void changeMoveSpeed(int terrainCost) {
+        moveSpeed = BASE_MOVE_SPEED*((float) 1 / terrainCost);
+    }
 
 }
