@@ -117,6 +117,10 @@ public abstract class Logger extends Sprite {
         return false;
     }
 
+    public int getGridNumBeforeUpdating() {
+        return gridY*GRID_SIZE+gridX;
+    }
+
     public int getCurrGridNum() {
         // determine which grid tile the logger is actually in:
         // if the x value is greater than half of the gridX, update gridX.

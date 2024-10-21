@@ -272,7 +272,6 @@ public class PlayScreen extends ScreenAdapter {
         // also if trees grow or get cut down we need to redo pathfinding immediately.
         for (ShrubTree shrubTree : shrubTrees) {
             if (shrubTree.update(delta)) {
-                System.out.println(grid[shrubTree.gridX][shrubTree.gridY].terrain);
                 grid[shrubTree.gridX][shrubTree.gridY].setNewTerrain(terrains[3]);
                 doPathfinding();
             }
@@ -313,7 +312,18 @@ public class PlayScreen extends ScreenAdapter {
         // move loggers and check if they're dead or not
         for (Iterator<Logger> loggerIterator = liveLoggers.iterator(); loggerIterator.hasNext();) {
             Logger logger = loggerIterator.next();
+            int preUpdateTileNum = logger.getGridNumBeforeUpdating();
             int loggerTileNum = logger.getCurrGridNum();
+            if (preUpdateTileNum != loggerTileNum) { // then we literally just left that tile!
+                // if we left shrub or tree, then chop it down and leave roots
+                for (Iterator<ShrubTree> shrubTreeIterator = shrubTrees.iterator(); shrubTreeIterator.hasNext();) {
+                    ShrubTree shrubTree = shrubTreeIterator.next();
+                    if (shrubTree.gridX == iVal(preUpdateTileNum) && shrubTree.gridY == jVal(preUpdateTileNum)) {
+                        shrubTreeIterator.remove();
+                        grid[iVal(preUpdateTileNum)][jVal(preUpdateTileNum)].setNewTerrain(terrains[1]);
+                    }
+                }
+            }
             // if the logger steps on a bee, ruh roh!
             Bees possibleBee = beeGrid[iVal(loggerTileNum)][jVal(loggerTileNum)];
             if (possibleBee != null) {
