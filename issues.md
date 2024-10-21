@@ -8,7 +8,8 @@
 - **[7]** Tower upgrades
 - **[8]** Summoning
 - **[9]** Logger animation + redesign
+- **[10]** Summons/Logger interactions
 
 ## Open Issues ##
-- **[10]** Summons/Logger interactions
-- **[11]** Polish UI
+- **[11]** Balancing
+- **[12]** Polish UI
