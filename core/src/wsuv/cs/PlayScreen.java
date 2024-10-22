@@ -9,10 +9,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import static wsuv.cs.Constants.*;
 
@@ -60,8 +57,8 @@ public class PlayScreen extends ScreenAdapter {
         timer = 0;
         csGame = game;
         state = SubState.PLAYING;
-        DEBUG_pathfinding = true;
-        DEBUG_borders = true;
+        DEBUG_pathfinding = false;
+        DEBUG_borders = false;
         hud = new HUD(csGame.am.get(CSGame.RSC_MONO_FONT));
         FileHandle file = Gdx.files.internal("highscore.txt");
         highScore = Integer.parseInt(file.readString());
@@ -81,7 +78,7 @@ public class PlayScreen extends ScreenAdapter {
 
         bindButtons();
         towerBeingUpgraded = null;
-        fertilizerCount = 500; // for now
+        fertilizerCount = 0;
         shrubTrees = new ArrayList<ShrubTree>(16);
 
         // the HUD will show FPS always, by default.  Here's how
@@ -167,6 +164,46 @@ public class PlayScreen extends ScreenAdapter {
             }
         });
 
+        hud.registerAction("fertilizer", new HUDActionCommand() {
+            static final String help = "Set fertilizer amount. Usage: fertilizer <x> ";
+
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    int x = Integer.parseInt(cmd[1]);
+                    if (x < 0) return "Fertilizer can't be negative";
+                    fertilizerCount = x;
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
+        hud.registerAction("debug", new HUDActionCommand() {
+            static final String help = "Toggle debug views on or off. Usage: debug on || debug off ";
+            @Override
+            public String execute(String[] cmd) {
+                try {
+                    String x = cmd[1];
+                    if (!(Objects.equals(x, "on") || Objects.equals(x, "off"))) return help;
+                    if (x.equals("on")) { DEBUG_borders = true; DEBUG_pathfinding = true; }
+                    else if (x.equals("off")) { DEBUG_borders = false; DEBUG_pathfinding = false; }
+                    return "ok!";
+                } catch (Exception e) {
+                    return help;
+                }
+            }
+
+            public String help(String[] cmd) {
+                return help;
+            }
+        });
+
         // HUD Data
         hud.registerView("High Score:", new HUDViewCommand(HUDViewCommand.Visibility.WHEN_OPEN) {
             @Override
@@ -189,6 +226,19 @@ public class PlayScreen extends ScreenAdapter {
         multiplexer.addProcessor(Gdx.input.getInputProcessor());
         // idk if this is necessary if im not using keyboard input but whatever who cares
         multiplexer.addProcessor(new InputAdapter() {
+            @Override
+            public boolean keyDown(int keycode) {
+                if (keycode == Input.Keys.ESCAPE) {
+                    activateSummonButtons();
+                    towerBeingUpgraded = null;
+                    summoningTree = false;
+                    summoningBees = false;
+                    summoningTower = false;
+                    return true;
+                }
+                return false;
+            }
+
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
                 // first, see which button it hit (if any). towers are kind of buttons!
@@ -222,15 +272,47 @@ public class PlayScreen extends ScreenAdapter {
                 // if a button was clicked, do the function
                 // if a tower was clicked, go to upgrade screen and set that tower to the one being upgraded
                 // if nothing was clicked, go back to summon screen and set towerBeingUpgraded to null
-                if (buttonHit != null) { buttonFunc(func); }
+                if (buttonHit != null) {
+                    if (buttonFunc(func)) {
+                        // success, make the happy sound :)
+                        System.out.println("button active/upgraded");
+                    }
+                    else {
+                        // then there isn't enough resources to do this command, play the out of fertilizer sound
+                        System.out.println("not enough fertilizer");
+                    }
+                }
                 // if this fails, perhaps we make it a boolean and then it will play a sound.
                 // also probably a success would make a sound
                 else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; }
                 // there's another option: we clicked a space after hitting a summon button to summon!
-                else if (summoningTree) { createTree(gridX, gridY); }
-                else if (summoningBees) { createBees(gridX, gridY); }
-                else if (summoningTower) { createTower(gridX, gridY); }
+                else if (summoningTree) {
+                    if (createTree(gridX, gridY)) {
+                        System.out.println("tree summoned");
+                    }
+                    else {
+                        // clicked on an invalid space!
+                        System.out.println("tree in invalid space or not enough fertilizer");
+                    }
+                }
+                else if (summoningBees) {
+                    if (createBees(gridX, gridY)) {
+                        System.out.println("bees summoned");
+                    }
+                    else {
+                        System.out.println("bees in invalid space or not enough fertilizer");
+                    }
+                }
+                else if (summoningTower) {
+                    if (createTower(gridX, gridY)) {
+                        System.out.println("tower summoned");
+                    }
+                    else {
+                        System.out.println("tower in invalid space or not enough fertilizer");
+                    }
+                }
                 else {
+                    // hitting nothing is the same as hitting escape
                     activateSummonButtons();
                     towerBeingUpgraded = null;
                     summoningTree = false;
@@ -258,7 +340,7 @@ public class PlayScreen extends ScreenAdapter {
         }
 
         // spawn next logger if more remain to be spawned
-        if ((loggerSpawnCount < currentWave+2) && (timer >= (loggerSpawnCount * time_between_spawns))) {
+        if ((loggerSpawnCount < currentWave+2) && (timer >= (loggerSpawnCount * time_between_spawns + time_between_spawns))) {
             spawnNextLogger();
         }
 
@@ -453,35 +535,35 @@ public class PlayScreen extends ScreenAdapter {
         * 4 = Rocks
         * */
         setupGrid = new int[][]{
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0},
-                {0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
-                {0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
-                {0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+                {0, 1, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 4, 4, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 1, 1, 0, 0},
+                {0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0},
+                {0, 0, 0, 1, 0, 0, 0, 0, 4, 4, 0, 0, 4, 0, 4, 0, 1, 4, 0, 0, 1, 1, 4, 0, 0, 0, 0, 0, 0},
+                {0, 0, 4, 0, 0, 0, 0, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0},
+                {0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 4, 0},
+                {0, 4, 4, 0, 0, 0, 0, 0, 4, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 4, 0},
+                {0, 0, 4, 0, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 4, 1, 0, 0, 0, 0, 0},
+                {0, 0, 4, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 4, 0, 0, 4, 0, 0, 0},
+                {0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 1, 0, 0, 4, 4, 4, 0},
+                {0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 4, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0},
+                {0, 4, 4, 4, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0},
+                {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 4, 4, 4, 0, 0, 0, 1, 0, 0, 0, 0, 1, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 0},
+                {0, 0, 0, 1, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 1, 0, 4, 0},
+                {0, 0, 0, 0, 1, 4, 4, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 4, 4, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0},
+                {0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 4, 0, 0, 0, 4, 4, 0, 4, 0},
+                {0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 4, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0},
         };
     }
 
@@ -511,7 +593,7 @@ public class PlayScreen extends ScreenAdapter {
         totalLoggers.add(new Lumberjack(csGame, 0, 0));
 
         killAllLoggers();
-        wave_time = 10;
+        wave_time = 6;
     }
 
     public void killAllLoggers() {
@@ -525,7 +607,7 @@ public class PlayScreen extends ScreenAdapter {
         // wave is a bulldozer and every eighth wave is a shredder.
         // Additionally, every wave increases the total time of spawning by 1 second.
         // This means that the time between logger spawns slowly decreases, approaching but never hitting 1 per second.
-        wave_time++;
+        wave_time = wave_time+0.5f;
         timer = 0;
         loggerSpawnCount = 0;
         time_between_spawns = wave_time / totalLoggers.size();
@@ -690,77 +772,90 @@ public class PlayScreen extends ScreenAdapter {
         }
     }
 
-    public void upgradeHealth() {
+    public boolean upgradeHealth() {
         int newFertilizerCount = towerBeingUpgraded.upgradeHealth(fertilizerCount);
         if (newFertilizerCount >= 0) {
             fertilizerCount = newFertilizerCount;
+            return true;
         }
+        else { return false; }
     }
 
-    public void upgradeRange() {
+    public boolean upgradeRange() {
         int newFertilizerCount = towerBeingUpgraded.upgradeRange(fertilizerCount);
         if (newFertilizerCount >= 0) {
             fertilizerCount = newFertilizerCount;
+            return true;
         }
+        else { return false; }
     }
 
-    public void upgradeAtkSpd() {
+    public boolean upgradeAtkSpd() {
         int newFertilizerCount = towerBeingUpgraded.upgradeAtkSpd(fertilizerCount);
         if (newFertilizerCount >= 0) {
             fertilizerCount = newFertilizerCount;
+            return true;
         }
+        else { return false; }
     }
 
-    public void summonTree() {
-        int newFertilizerCount = fertilizerCount-summonCosts[0];
-        if (newFertilizerCount < 0) return;
+    public boolean summonTree() {
         summoningTree = true;
         summoningBees = false;
         summoningTower = false;
-        fertilizerCount = newFertilizerCount;
+        return true;
     }
 
-    public void summonBees() {
-        int newFertilizerCount = fertilizerCount-summonCosts[1];
-        if (newFertilizerCount < 0) return;
+    public boolean summonBees() {
         summoningTree = false;
         summoningBees = true;
         summoningTower = false;
-        fertilizerCount = newFertilizerCount;
+        return true;
     }
 
-    public void summonTower() {
-        int newFertilizerCount = fertilizerCount-summonCosts[2];
-        if (newFertilizerCount < 0) return;
+    public boolean summonTower() {
         summoningTree = false;
         summoningBees = false;
         summoningTower = true;
-        fertilizerCount = newFertilizerCount;
+        return true;
     }
 
-    public void createTree(int gridX, int gridY) {
-        summoningTree = false;
-        if (!validateGridSpace(gridX, gridY)) { return; }
-        if (grid[gridX][gridY].terrain == terrains[1]) { fertilizerCount++; } // get a little refund if planting on roots
+    public boolean createTree(int gridX, int gridY) {
+        if (!validateGridSpace(gridX, gridY)) { return false; }
+        int summonTreeCost = summonCosts[0];
+        if (grid[gridX][gridY].terrain == terrains[1]) { summonTreeCost--; } // get a little refund if planting on roots
+        int newFertilizerCount = fertilizerCount-summonTreeCost;
+        if (newFertilizerCount < 0) return false;
         shrubTrees.add(new ShrubTree(gridX, gridY));
         grid[gridX][gridY].setNewTerrain(terrains[2]);
         doPathfinding();
+        fertilizerCount -= summonTreeCost;
+        return true;
     }
 
-    public void createBees(int gridX, int gridY) {
-        summoningBees = false;
-        if (!validateGridSpace(gridX, gridY)) { return; }
+    public boolean createBees(int gridX, int gridY) {
+        int newFertilizerCount = fertilizerCount-summonCosts[1];
+        if (newFertilizerCount < 0) return false;
+        if (!validateGridSpace(gridX, gridY)) { return false; }
         beeGrid[gridX][gridY] = new Bees(csGame, gridX, gridY);
+        fertilizerCount -= summonCosts[1];
+        return true;
     }
 
-    public void createTower(int gridX, int gridY) {
-        summoningTower = false;
-        if (!validateGridSpace(gridX, gridY)) { return; }
+    public boolean createTower(int gridX, int gridY) {
+        int newFertilizerCount = fertilizerCount-summonCosts[2];
+        if (newFertilizerCount < 0) return false;
+        if (!validateGridSpace(gridX, gridY)) { return false; }
         towers.add(new Tower(csGame, gridX, gridY));
         doPathfinding();
+        fertilizerCount -= summonCosts[2];
+        summonCosts[2] += 4;
+        return true;
     }
 
     public boolean validateGridSpace(int gridX, int gridY) {
+        // can't summon unless it's on the actual grid!
+        if (gridX >= GRID_SIZE) return false;
         // can't summon on shrubs or trees or rocks:
         if (grid[gridX][gridY].terrain == terrains[2] || grid[gridX][gridY].terrain == terrains[3] || grid[gridX][gridY].terrain == terrains[4]) { return false; }
         // cannot summon on top of bees or loggers or towers-- not sure how to do bees just yet!
@@ -775,29 +870,23 @@ public class PlayScreen extends ScreenAdapter {
         // otherwise, this grid is fine to go on!
         return true;
     }
-    public void buttonFunc(String func) {
+    public boolean buttonFunc(String func) {
         switch (func) {
             case "upgradeHealth":
-                upgradeHealth();
-                break;
+                return upgradeHealth();
             case "upgradeRange":
-                upgradeRange();
-                break;
+                return upgradeRange();
             case "upgradeAtkSpd":
-                upgradeAtkSpd();
-                break;
+                return upgradeAtkSpd();
             case "summonTree":
-                summonTree();
-                break;
+                return summonTree();
             case "summonBees":
-                summonBees();
-                break;
+                return summonBees();
             case "summonTower":
-                summonTower();
-                break;
+                return summonTower();
             default:
                 System.out.println("you just hit a fake button!");
-                break;
+                return false;
         }
     }
 
