@@ -5,6 +5,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.text.DecimalFormat;
@@ -49,9 +50,13 @@ public class PlayScreen extends ScreenAdapter {
     private String[] summonButtonFuncs;
     private int fertilizerCount;
     private boolean summoningTree;
+    private Sprite treeHolo;
     private ArrayList<ShrubTree> shrubTrees;
     private boolean summoningBees;
+    private Sprite beesHolo;
     private boolean summoningTower;
+    private Sprite towerHolo;
+    private Sprite validateHolo;
 
     public PlayScreen(CSGame game) {
         timer = 0;
@@ -80,6 +85,13 @@ public class PlayScreen extends ScreenAdapter {
         towerBeingUpgraded = null;
         fertilizerCount = 0;
         shrubTrees = new ArrayList<ShrubTree>(16);
+        treeHolo = new Sprite(game.am.get("trees.png", Texture.class));
+        treeHolo.setAlpha(0.7f);
+        beesHolo = new Sprite(game.am.get("bee.png", Texture.class));
+        beesHolo.setAlpha(0.7f);
+        towerHolo = new Sprite(game.am.get("frogTower.png", Texture.class));
+        towerHolo.setAlpha(0.7f);
+        validateHolo = new Sprite(game.am.get("whiteTile.png", Texture.class));
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -424,6 +436,55 @@ public class PlayScreen extends ScreenAdapter {
         // if all the loggers are dead (after they've all been spawned!), then the wave has been beaten.
         if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
 
+        // holograms for summoning
+
+        if (summoningTree || summoningBees || summoningTower) {
+            int xMousePos = Gdx.input.getX();
+            int yMousePos = 928 - Gdx.input.getY();
+            int gridX = xMousePos / TILE_SIZE;
+            int gridY = yMousePos / TILE_SIZE;
+            if (validateGridSpace(gridX, gridY)) {
+                int summonCost = 9999;
+                if (summoningTree && grid[gridX][gridY].terrain == terrains[1]) {
+                    summonCost = summonCosts[0]-1;
+                }
+                else if (summoningTree) {
+                    summonCost = summonCosts[0];
+                }
+                else if (summoningBees) {
+                    summonCost = summonCosts[1];
+                }
+                else if (summoningTower) {
+                    summonCost = summonCosts[2];
+                }
+
+                if (summonCost <= fertilizerCount) {
+                    validateHolo.setColor(Color.GREEN);
+                }
+                else {
+                    validateHolo.setColor(Color.RED);
+                }
+            } else {
+                validateHolo.setColor(Color.RED);
+            }
+            validateHolo.setAlpha(0.5f);
+            validateHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE);
+            if (summoningTree) { treeHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE); }
+            else { treeHolo.setPosition(-TILE_SIZE, -TILE_SIZE); }
+            if (summoningBees) { beesHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE); }
+            else { beesHolo.setPosition(-TILE_SIZE, -TILE_SIZE); }
+            if (summoningTower) { towerHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE); }
+            else { towerHolo.setPosition(-TILE_SIZE, -TILE_SIZE); }
+        }
+        else {
+            validateHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+            treeHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+            beesHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+            towerHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+        }
+
+
+
     }
 
 
@@ -492,6 +553,12 @@ public class PlayScreen extends ScreenAdapter {
             font.draw(csGame.batch, "Current Range: " + towerBeingUpgraded.getRange(), 960,414 );
             font.draw(csGame.batch, "Current AtkSpd: " + formatter.format(towerBeingUpgraded.getAttackSpeed()), 944,666 );
         }
+
+        // draw holograms
+        validateHolo.draw(csGame.batch);
+        treeHolo.draw(csGame.batch);
+        beesHolo.draw(csGame.batch);
+        towerHolo.draw(csGame.batch);
 
         font.setColor(Color.BLACK);
         hud.draw(csGame.batch);
@@ -855,7 +922,7 @@ public class PlayScreen extends ScreenAdapter {
 
     public boolean validateGridSpace(int gridX, int gridY) {
         // can't summon unless it's on the actual grid!
-        if (gridX >= GRID_SIZE) return false;
+        if (gridX >= GRID_SIZE || gridY >= GRID_SIZE || gridX < 0 || gridY < 0) return false;
         // can't summon on shrubs or trees or rocks:
         if (grid[gridX][gridY].terrain == terrains[2] || grid[gridX][gridY].terrain == terrains[3] || grid[gridX][gridY].terrain == terrains[4]) { return false; }
         // cannot summon on top of bees or loggers or towers-- not sure how to do bees just yet!

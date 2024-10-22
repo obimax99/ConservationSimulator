@@ -48,6 +48,7 @@ public class CSGame extends Game {
     public static final String RSC_SHRUBS_IMG = "shrubs.png";
     public static final String RSC_TREES_IMG = "trees.png";
     public static final String RSC_ROCKS_IMG = "rocks.png";
+    public static final String RSC_WHITETILE_IMG = "whiteTile.png";
 
 
     AssetManager am;  // AssetManager provides a single source for loaded resources
@@ -158,6 +159,7 @@ public class CSGame extends Game {
         am.load(RSC_SHRUBS_IMG, Texture.class);
         am.load(RSC_TREES_IMG, Texture.class);
         am.load(RSC_ROCKS_IMG, Texture.class);
+        am.load(RSC_WHITETILE_IMG, Texture.class);
 
         // Load Sounds
 
