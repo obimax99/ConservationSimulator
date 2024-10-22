@@ -31,12 +31,12 @@ public class Tower extends Sprite {
         this.health = 5;
         this.maxHealth = health;
         this.isDead = false;
-        this.range = 5;
-        this.timeBetweenAttacks = 1.0f;
+        this.range = 4;
+        this.timeBetweenAttacks = 1.66667f;
         this.towerAttackTimer = 0.0f;
         this.upgradeCosts = new int[] {
                 3,
-                3,
+                7,
                 3,
         };
     }
@@ -94,7 +94,7 @@ public class Tower extends Sprite {
         health += healthIncreasePerUpgrade;
         maxHealth += healthIncreasePerUpgrade;
         // maxHealth useless for now, but the hope is to get a UI element that shows health bar
-        upgradeCosts[0]++;
+        upgradeCosts[0] = upgradeCosts[0] + 2;
         return remainingFertilizer;
     }
 
@@ -102,7 +102,7 @@ public class Tower extends Sprite {
         if (totalFertilizer < upgradeCosts[1]) { return -1; }
         int remainingFertilizer = totalFertilizer - upgradeCosts[1];
         range += rangeIncreasePerUpgrade;
-        upgradeCosts[1]++;
+        upgradeCosts[1] = upgradeCosts[1] + 2;
         return remainingFertilizer;
     }
 
@@ -110,7 +110,7 @@ public class Tower extends Sprite {
         if (totalFertilizer < upgradeCosts[2]) { return -1; }
         int remainingFertilizer = totalFertilizer - upgradeCosts[2];
         timeBetweenAttacks = 1 / (getAttackSpeed() + atkSpdIncreasePerUpgrade);
-        upgradeCosts[2]++;
+        upgradeCosts[2] = upgradeCosts[2] + 2;
         return remainingFertilizer;
     }
 
