@@ -42,6 +42,7 @@ public class PlayScreen extends ScreenAdapter {
     private ArrayList<Tower> towers;
     private ArrayList<FrogSpit> frogSpits;
 
+    private String[] buttonKeyBinds;
     private ArrayList<CSButton> upgradeButtons;
     private String[] upgradeButtonFuncs;
     private Tower towerBeingUpgraded;
@@ -243,10 +244,83 @@ public class PlayScreen extends ScreenAdapter {
                 if (keycode == Input.Keys.ESCAPE) {
                     activateSummonButtons();
                     towerBeingUpgraded = null;
-                    summoningTree = false;
-                    summoningBees = false;
-                    summoningTower = false;
+                    cancelSummonBooleans();
                     return true;
+                }
+                else if (keycode == Input.Keys.Q) {
+                    // if its an upgrade
+                    cancelSummonBooleans();
+                    if (towerBeingUpgraded != null) {
+                        if (buttonFunc(upgradeButtonFuncs[0])) {
+                            // success, make the happy sound :)
+                            System.out.println("button active/upgraded");
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            System.out.println("not enough fertilizer");
+                        }
+                    }
+                    // else its a summon
+                    else {
+                        if (buttonFunc(summonButtonFuncs[0])) {
+                            // success, make the happy sound :)
+                            System.out.println("button active/upgraded");
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            System.out.println("not enough fertilizer");
+                        }
+                    }
+                }
+                else if (keycode == Input.Keys.W) {
+                    // if its an upgrade
+                    cancelSummonBooleans();
+                    if (towerBeingUpgraded != null) {
+                        if (buttonFunc(upgradeButtonFuncs[1])) {
+                            // success, make the happy sound :)
+                            System.out.println("button active/upgraded");
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            System.out.println("not enough fertilizer");
+                        }
+                    }
+                    // else its a summon
+                    else {
+                        if (buttonFunc(summonButtonFuncs[1])) {
+                            // success, make the happy sound :)
+                            System.out.println("button active/upgraded");
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            System.out.println("not enough fertilizer");
+                        }
+                    }
+                }
+                else if (keycode == Input.Keys.E) {
+                    // if its an upgrade
+                    cancelSummonBooleans();
+                    if (towerBeingUpgraded != null) {
+                        if (buttonFunc(upgradeButtonFuncs[2])) {
+                            // success, make the happy sound :)
+                            System.out.println("button active/upgraded");
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            System.out.println("not enough fertilizer");
+                        }
+                    }
+                    // else its a summon
+                    else {
+                        if (buttonFunc(summonButtonFuncs[2])) {
+                            // success, make the happy sound :)
+                            System.out.println("button active/upgraded");
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            System.out.println("not enough fertilizer");
+                        }
+                    }
                 }
                 return false;
             }
@@ -296,7 +370,7 @@ public class PlayScreen extends ScreenAdapter {
                 }
                 // if this fails, perhaps we make it a boolean and then it will play a sound.
                 // also probably a success would make a sound
-                else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; }
+                else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; cancelSummonBooleans(); }
                 // there's another option: we clicked a space after hitting a summon button to summon!
                 else if (summoningTree) {
                     if (createTree(gridX, gridY)) {
@@ -327,9 +401,7 @@ public class PlayScreen extends ScreenAdapter {
                     // hitting nothing is the same as hitting escape
                     activateSummonButtons();
                     towerBeingUpgraded = null;
-                    summoningTree = false;
-                    summoningBees = false;
-                    summoningTower = false;
+                    cancelSummonBooleans();
                     return false;
                 }
                 return true;
@@ -536,16 +608,21 @@ public class PlayScreen extends ScreenAdapter {
         }
         csGame.batch.draw(csGame.am.get(CSGame.RSC_BACKGROUNDUI_IMG, Texture.class), 928, 0);
         font.draw(csGame.batch, Integer.toString(fertilizerCount), 1024, 28);
+        int ii = -1;
         for (CSButton upgradeButton : upgradeButtons) {
             if (upgradeButton.isActive()) {
+                ii++;
                 upgradeButton.draw(csGame.batch);
                 font.draw(csGame.batch, Integer.toString(towerBeingUpgraded.getUpgradeCost(upgradeButton.buttonNum)), upgradeButton.getX() + 100, upgradeButton.getY()+20);
+                font.draw(csGame.batch, buttonKeyBinds[ii], upgradeButton.getX()-20, upgradeButton.getY()+20);
             }
         }
         for (CSButton summonButton : summonButtons) {
             if (summonButton.isActive()) {
+                ii++;
                 summonButton.draw(csGame.batch);
                 font.draw(csGame.batch, Integer.toString(summonCosts[summonButton.buttonNum]), summonButton.getX() + 100, summonButton.getY()+20);
+                font.draw(csGame.batch, buttonKeyBinds[ii], summonButton.getX()-20, summonButton.getY()+20);
             }
         }
         if (towerBeingUpgraded != null) {
@@ -789,6 +866,11 @@ public class PlayScreen extends ScreenAdapter {
                 3,
                 12,
         };
+        buttonKeyBinds = new String[] {
+                "Q",
+                "W",
+                "E",
+        };
 
         final float WIDTH_OF_BUTTONS = 128;
         final float HEIGHT_OF_BUTTONS = 128;
@@ -867,22 +949,19 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public boolean summonTree() {
+        cancelSummonBooleans();
         summoningTree = true;
-        summoningBees = false;
-        summoningTower = false;
         return true;
     }
 
     public boolean summonBees() {
-        summoningTree = false;
+        cancelSummonBooleans();
         summoningBees = true;
-        summoningTower = false;
         return true;
     }
 
     public boolean summonTower() {
-        summoningTree = false;
-        summoningBees = false;
+        cancelSummonBooleans();
         summoningTower = true;
         return true;
     }
@@ -955,6 +1034,12 @@ public class PlayScreen extends ScreenAdapter {
                 System.out.println("you just hit a fake button!");
                 return false;
         }
+    }
+
+    public void cancelSummonBooleans() {
+        summoningTree = false;
+        summoningBees = false;
+        summoningTower = false;
     }
 
     public void endGame() {
