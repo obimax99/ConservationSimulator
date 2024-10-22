@@ -9,7 +9,7 @@
 - **[8]** Summoning
 - **[9]** Logger animation + redesign
 - **[10]** Summons/Logger interactions
+- **[11]** Balancing
 
 ## Open Issues ##
-- **[11]** Balancing
 - **[12]** Polish UI
