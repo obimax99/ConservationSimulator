@@ -248,6 +248,12 @@ public class PlayScreen extends ScreenAdapter {
                 return Integer.toString(currentWave);
             }
         });
+        hud.registerView("Enemies Remaining:", new HUDViewCommand(HUDViewCommand.Visibility.ALWAYS) {
+            @Override
+            public String execute(boolean consoleIsOpen) {
+                return Integer.toString((currentWave+2-loggerSpawnCount+liveLoggers.size()));
+            }
+        });
 
         // we're adding an input processor AFTER the HUD has been created,
         // so we need to be a bit careful here and make sure not to clobber
