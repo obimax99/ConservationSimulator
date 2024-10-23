@@ -60,24 +60,31 @@ public class PlayScreen extends ScreenAdapter {
     private Sprite towerHolo;
     private Sprite validateHolo;
 
-    private Sound spitSfx;
+    private ArrayList<Sound> spitSfx;
     private Sound frogHurtSfx;
     private Sound frogDieSfx;
     private Sound notAllowedSfx;
     private Sound confirmedSfx;
     private Sound chopSfx;
     private Sound footstepSfx;
+    private Sound beesSfx;
+    private Sound loggerDieSfx;
+    private Sound growSfx;
 
     public PlayScreen(CSGame game) {
         timer = 0;
         csGame = game;
-        spitSfx = game.am.get(CSGame.RSC_SPIT_SFX);
+        spitSfx = new ArrayList<Sound>(4);
+        spitSfx.add(game.am.get(CSGame.RSC_SPIT1_SFX)); spitSfx.add(game.am.get(CSGame.RSC_SPIT2_SFX)); spitSfx.add(game.am.get(CSGame.RSC_SPIT3_SFX)); spitSfx.add(game.am.get(CSGame.RSC_SPIT4_SFX));
         frogHurtSfx = game.am.get(CSGame.RSC_FROG_HURT_SFX);
         frogDieSfx = game.am.get(CSGame.RSC_FROG_DIE_SFX);
         notAllowedSfx = game.am.get(CSGame.RSC_NOT_ALLOWED_SFX);
         confirmedSfx = game.am.get(CSGame.RSC_CONFIRMED_SFX);
         chopSfx = game.am.get(CSGame.RSC_CHOP_SFX);
         footstepSfx = game.am.get(CSGame.RSC_FOOTSTEP_SFX);
+        beesSfx = game.am.get(CSGame.RSC_BEES_SFX);
+        loggerDieSfx = game.am.get(CSGame.RSC_LOGGER_DIE_SFX);
+        growSfx = game.am.get(CSGame.RSC_GROW_SFX);
         state = SubState.PLAYING;
         DEBUG_pathfinding = false;
         DEBUG_borders = false;
@@ -488,6 +495,7 @@ public class PlayScreen extends ScreenAdapter {
         for (ShrubTree shrubTree : shrubTrees) {
             if (shrubTree.update(delta)) {
                 grid[shrubTree.gridX][shrubTree.gridY].setNewTerrain(terrains[3]);
+                growSfx.play();
                 doPathfinding();
             }
         }
@@ -514,7 +522,7 @@ public class PlayScreen extends ScreenAdapter {
             if (targetedLogger == null) { continue; }
             // if we actually can shoot, then shoot at that logger
             shootProjectile(tower.gridX, tower.gridY, targetedLogger);
-            spitSfx.play();
+            spitSfx.get(csGame.random.nextInt(4)).play();
         }
 
         // if all towers have been destroyed, RIP-- that's the game.
@@ -549,12 +557,14 @@ public class PlayScreen extends ScreenAdapter {
             if (possibleBee != null) {
                 logger.takeDamage(possibleBee.damage);
                 // bee dies too though :(
+                beesSfx.play();
                 beeGrid[iVal(loggerTileNum)][jVal(loggerTileNum)] = null;
             }
             char direction = getCheapestDirection(loggerTileNum);
             logger.update(delta, direction);
             if (logger.isDead()) {
                 fertilizerCount = fertilizerCount + logger.damage; // stronger loggers drop more fertilizer!
+                loggerDieSfx.play();
                 loggerIterator.remove();
             }
         }
@@ -1037,6 +1047,7 @@ public class PlayScreen extends ScreenAdapter {
         if (newFertilizerCount < 0) return false;
         if (!validateGridSpace(gridX, gridY)) { return false; }
         beeGrid[gridX][gridY] = new Bees(csGame, gridX, gridY);
+        beesSfx.play();
         fertilizerCount -= summonCosts[1];
         return true;
     }
