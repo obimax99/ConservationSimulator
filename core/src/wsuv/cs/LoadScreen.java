@@ -18,8 +18,7 @@ public class LoadScreen extends ScreenAdapter {
     public LoadScreen(CSGame game) {
         csGame = game;
         linesShown = 10;
-        scrollrate = 1;  // this is currently pixels/frame, not pixels/sec!
-        // This will change on final release but it's not worth changing now, I don't care about credits when debugging!
+        scrollrate = 10;  // this is currently pixels/frame, not pixels/sec!
 
         // really our app will load quickly, but let's
         // fake a more complicated system... we'll wait
@@ -45,7 +44,7 @@ public class LoadScreen extends ScreenAdapter {
         if (font == null && csGame.am.isLoaded(CSGame.RSC_MONO_FONT)) {
             font = csGame.am.get(CSGame.RSC_MONO_FONT);
         } else if (csGame.am.isFinished() && (credits_offset >= credits.length || Gdx.input.isKeyPressed(Input.Keys.SPACE)) ) {
-            csGame.setScreen(new SplashScreen(csGame));
+            csGame.setScreen(new SplashScreen(csGame, true));
         } else if (font != null) {
             // once the font is loaded, start showing credits.
             // we'll assume a fairly smooth framerate at just start scrolling

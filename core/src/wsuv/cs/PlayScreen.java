@@ -624,7 +624,7 @@ public class PlayScreen extends ScreenAdapter {
                 csGame.batch.draw(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class), 200, 200);
                 break;
             case READY:
-                csGame.setScreen(new SplashScreen(csGame));
+                csGame.setScreen(new SplashScreen(csGame, false));
                 break;
             case PLAYING:
                 break;

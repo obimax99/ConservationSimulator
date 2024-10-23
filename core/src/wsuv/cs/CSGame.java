@@ -23,6 +23,8 @@ import java.util.Random;
 public class CSGame extends Game {
     public static final String RSC_GAMEOVER_IMG = "gameover.png";
     public static final String RSC_PRESSAKEY_IMG = "pressakey.png";
+    public static final String RSC_INTRO_IMG = "intro.png";
+    public static final String RSC_LOGO_IMG = "logo.png";
     public static final String RSC_MONO_FONT_FILE = "JetBrainsMono-Regular.ttf";
     public static final String RSC_MONO_FONT = "JBM.ttf";
 
@@ -126,6 +128,8 @@ public class CSGame extends Game {
         // Load Textures after the font...
         am.load(RSC_GAMEOVER_IMG, Texture.class);
         am.load(RSC_PRESSAKEY_IMG, Texture.class);
+        am.load(RSC_INTRO_IMG, Texture.class);
+        am.load(RSC_LOGO_IMG, Texture.class);
 
         am.load(RSC_FROGTOWER_IMG, Texture.class);
         am.load(RSC_FROGSPIT_IMG, Texture.class);
@@ -169,7 +173,6 @@ public class CSGame extends Game {
         music = Gdx.audio.newMusic(Gdx.files.internal("Forest_Hopper.mp3"));
         music.setLooping(true);
         music.setVolume(.5f);
-        music.play();
     }
 
     @Override
