@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 
 import java.util.ArrayList;
 import java.lang.Math;
@@ -168,12 +169,27 @@ public class Tower extends Sprite {
         int maxGridY = Math.min(gridY+range, GRID_SIZE-1);
         int closestDist = 2*range;
         Logger closestLogger = null;
+        float angle = 0.0f;
         for (Logger logger : liveLoggers) {
             if (logger.gridY >= minGridY && logger.gridX >= minGridX && logger.gridY <= maxGridY && logger.gridX <= maxGridX) {
                 int distFromTower = Math.abs(logger.gridX - gridX) + Math.abs(logger.gridY - gridY);
                 if (distFromTower < closestDist) {
                     closestDist = distFromTower;
                     closestLogger = logger;
+                    Vector2 loggerLoc = new Vector2(logger.getX(), logger.getY());
+                    Vector2 towerLoc = new Vector2(getX(), getY());
+                    towerLoc.sub(loggerLoc);
+                    angle = towerLoc.angleDeg();
+                    if (angle <= 90 || angle >= 270) {
+                        // left side, translation
+                        this.setScale(-Math.abs(getScaleX()), getScaleY());
+                        this.setRotation(angle);
+                    }
+                    else {
+                        // right side, no translation
+                        this.setScale(Math.abs(getScaleX()), getScaleY());
+                        this.setRotation(180+angle);
+                    }
                 }
             }
         }
@@ -212,6 +228,7 @@ public class Tower extends Sprite {
         }
         else {
             currentFrame = currentAnimations.get("idle").getKeyFrame(animationTimer, true);
+            this.setRotation(0);
         }
         setRegion(currentFrame);
     }

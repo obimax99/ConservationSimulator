@@ -197,8 +197,8 @@ public class CSGame extends Game {
 
         ArrayList<Animation<TextureRegion>> animationArrayList = new ArrayList<>();
         animationArrayList.add(new Animation<TextureRegion>(0.1f, frogIdleFrames));
-        animationArrayList.add(new Animation<TextureRegion>(0.02f, frogAttackFrames));
-        animationArrayList.add(new Animation<TextureRegion>(0.02f, frogHurtFrames));
+        animationArrayList.add(new Animation<TextureRegion>(0.025f, frogAttackFrames));
+        animationArrayList.add(new Animation<TextureRegion>(0.025f, frogHurtFrames));
         animationArrayList.add(new Animation<TextureRegion>(0.08f, frogDeathFrames));
         return animationArrayList;
     }
