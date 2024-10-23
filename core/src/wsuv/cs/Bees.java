@@ -15,6 +15,6 @@ public class Bees extends Sprite {
         this.gridY = gridY;
         setX(gridX*TILE_SIZE);
         setY(gridY*TILE_SIZE);
-        this.damage = 1;
+        this.damage = 3;
     }
 }
