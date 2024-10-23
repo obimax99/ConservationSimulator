@@ -90,8 +90,10 @@ public class PlayScreen extends ScreenAdapter {
         treeHolo.setAlpha(0.7f);
         beesHolo = new Sprite(game.am.get("bee.png", Texture.class));
         beesHolo.setAlpha(0.7f);
-        towerHolo = new Sprite(game.am.get("frogTower.png", Texture.class));
-        towerHolo.setAlpha(0.7f);
+        towerHolo = new Sprite(game.greenFrogIdleAnimation.getKeyFrame(0.05f));
+        towerHolo.setSize(TILE_SIZE, TILE_SIZE);
+        //towerHolo.setScale(2);
+        towerHolo.setAlpha(0.85f);
         validateHolo = new Sprite(game.am.get("whiteTile.png", Texture.class));
 
         // the HUD will show FPS always, by default.  Here's how
@@ -453,10 +455,9 @@ public class PlayScreen extends ScreenAdapter {
                     // if the logger is already on top of the tower, then the tower takes damage and the logger dies
                     tower.takeDamage(logger.damage);
                     logger.takeDamage(logger.damage); //guaranteed to kill logger
-                    if (tower.isDead) { towerIterator.remove(); doPathfinding(); continue; }
-                    // need to check here so that we don't kill extra loggers
                 }
             }
+            if (tower.isDead) { towerIterator.remove(); doPathfinding(); continue; }
             // updates internal attack timers and maybe other stuff idk yet
             tower.update(delta);
             // if attack isn't ready OR nothing is in range, this method will return null

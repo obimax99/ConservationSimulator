@@ -8,7 +8,12 @@
   https://www.jetbrains.com/lp/mono/
   free/opensource no credit required
 
-  Maicerochico [base sprite]
+  Maicerochico [Logger base sprite]
   Looker Sprite Sheet
   https://www.deviantart.com/maicerochico/art/Platinum-Looker-Overworld-Sprites-Ripped-651961803
+  free/opensource no credit required
+
+  Eduardo Scarpato [Frogs]
+  Frog Sprite / Animation Sheet
+  https://eduardscarpato.itch.io/toxic-frog-animations-pixel-art-2d-free
   free/opensource no credit required
