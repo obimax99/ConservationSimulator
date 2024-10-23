@@ -1,6 +1,7 @@
 package wsuv.cs;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -59,9 +60,24 @@ public class PlayScreen extends ScreenAdapter {
     private Sprite towerHolo;
     private Sprite validateHolo;
 
+    private Sound spitSfx;
+    private Sound frogHurtSfx;
+    private Sound frogDieSfx;
+    private Sound notAllowedSfx;
+    private Sound confirmedSfx;
+    private Sound chopSfx;
+    private Sound footstepSfx;
+
     public PlayScreen(CSGame game) {
         timer = 0;
         csGame = game;
+        spitSfx = game.am.get(CSGame.RSC_SPIT_SFX);
+        frogHurtSfx = game.am.get(CSGame.RSC_FROG_HURT_SFX);
+        frogDieSfx = game.am.get(CSGame.RSC_FROG_DIE_SFX);
+        notAllowedSfx = game.am.get(CSGame.RSC_NOT_ALLOWED_SFX);
+        confirmedSfx = game.am.get(CSGame.RSC_CONFIRMED_SFX);
+        chopSfx = game.am.get(CSGame.RSC_CHOP_SFX);
+        footstepSfx = game.am.get(CSGame.RSC_FOOTSTEP_SFX);
         state = SubState.PLAYING;
         DEBUG_pathfinding = false;
         DEBUG_borders = false;
@@ -243,6 +259,7 @@ public class PlayScreen extends ScreenAdapter {
         multiplexer.addProcessor(new InputAdapter() {
             @Override
             public boolean keyDown(int keycode) {
+                if (hud.isOpen()) { return false; }
                 if (keycode == Input.Keys.ESCAPE) {
                     activateSummonButtons();
                     towerBeingUpgraded = null;
@@ -255,22 +272,23 @@ public class PlayScreen extends ScreenAdapter {
                     if (towerBeingUpgraded != null) {
                         if (buttonFunc(upgradeButtonFuncs[0])) {
                             // success, make the happy sound :)
-                            System.out.println("button active/upgraded");
+                            confirmedSfx.play();
                         }
                         else {
                             // then there isn't enough resources to do this command, play the out of fertilizer sound
-                            System.out.println("not enough fertilizer");
+                            notAllowedSfx.play();
                         }
                     }
                     // else its a summon
                     else {
                         if (buttonFunc(summonButtonFuncs[0])) {
                             // success, make the happy sound :)
-                            System.out.println("button active/upgraded");
+                            confirmedSfx.play();
                         }
                         else {
                             // then there isn't enough resources to do this command, play the out of fertilizer sound
-                            System.out.println("not enough fertilizer");
+
+                            notAllowedSfx.play();
                         }
                     }
                 }
@@ -280,22 +298,26 @@ public class PlayScreen extends ScreenAdapter {
                     if (towerBeingUpgraded != null) {
                         if (buttonFunc(upgradeButtonFuncs[1])) {
                             // success, make the happy sound :)
-                            System.out.println("button active/upgraded");
+
+                            confirmedSfx.play();
                         }
                         else {
                             // then there isn't enough resources to do this command, play the out of fertilizer sound
-                            System.out.println("not enough fertilizer");
+
+                            notAllowedSfx.play();
                         }
                     }
                     // else its a summon
                     else {
                         if (buttonFunc(summonButtonFuncs[1])) {
                             // success, make the happy sound :)
-                            System.out.println("button active/upgraded");
+
+                            confirmedSfx.play();
                         }
                         else {
                             // then there isn't enough resources to do this command, play the out of fertilizer sound
-                            System.out.println("not enough fertilizer");
+
+                            notAllowedSfx.play();
                         }
                     }
                 }
@@ -305,22 +327,26 @@ public class PlayScreen extends ScreenAdapter {
                     if (towerBeingUpgraded != null) {
                         if (buttonFunc(upgradeButtonFuncs[2])) {
                             // success, make the happy sound :)
-                            System.out.println("button active/upgraded");
+
+                            confirmedSfx.play();
                         }
                         else {
                             // then there isn't enough resources to do this command, play the out of fertilizer sound
-                            System.out.println("not enough fertilizer");
+
+                            notAllowedSfx.play();
                         }
                     }
                     // else its a summon
                     else {
                         if (buttonFunc(summonButtonFuncs[2])) {
                             // success, make the happy sound :)
-                            System.out.println("button active/upgraded");
+
+                            confirmedSfx.play();
                         }
                         else {
                             // then there isn't enough resources to do this command, play the out of fertilizer sound
-                            System.out.println("not enough fertilizer");
+
+                            notAllowedSfx.play();
                         }
                     }
                 }
@@ -363,40 +389,55 @@ public class PlayScreen extends ScreenAdapter {
                 if (buttonHit != null) {
                     if (buttonFunc(func)) {
                         // success, make the happy sound :)
-                        System.out.println("button active/upgraded");
+
+                        confirmedSfx.play();
                     }
                     else {
                         // then there isn't enough resources to do this command, play the out of fertilizer sound
-                        System.out.println("not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 // if this fails, perhaps we make it a boolean and then it will play a sound.
                 // also probably a success would make a sound
                 else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; cancelSummonBooleans(); }
+                else if (gridX >= GRID_SIZE) {
+                    // hitting nothing is the same as hitting escape
+                    activateSummonButtons();
+                    towerBeingUpgraded = null;
+                    cancelSummonBooleans();
+                    return false;
+                }
                 // there's another option: we clicked a space after hitting a summon button to summon!
                 else if (summoningTree) {
                     if (createTree(gridX, gridY)) {
-                        System.out.println("tree summoned");
+
+                        confirmedSfx.play();
                     }
                     else {
                         // clicked on an invalid space!
-                        System.out.println("tree in invalid space or not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 else if (summoningBees) {
                     if (createBees(gridX, gridY)) {
-                        System.out.println("bees summoned");
+
+                        confirmedSfx.play();
                     }
                     else {
-                        System.out.println("bees in invalid space or not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 else if (summoningTower) {
                     if (createTower(gridX, gridY)) {
-                        System.out.println("tower summoned");
+
+                        confirmedSfx.play();
                     }
                     else {
-                        System.out.println("tower in invalid space or not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 else {
@@ -454,6 +495,8 @@ public class PlayScreen extends ScreenAdapter {
                 if (logger.gridX == tower.gridX && logger.gridY == tower.gridY) {
                     // if the logger is already on top of the tower, then the tower takes damage and the logger dies
                     tower.takeDamage(logger.damage);
+                    frogHurtSfx.play();
+                    if (tower.getHealth() <= 0) { frogDieSfx.play(); } // play death sound before isDead true
                     logger.takeDamage(logger.damage); //guaranteed to kill logger
                 }
             }
@@ -465,6 +508,7 @@ public class PlayScreen extends ScreenAdapter {
             if (targetedLogger == null) { continue; }
             // if we actually can shoot, then shoot at that logger
             shootProjectile(tower.gridX, tower.gridY, targetedLogger);
+            spitSfx.play();
         }
 
         // if all towers have been destroyed, RIP-- that's the game.
@@ -483,11 +527,13 @@ public class PlayScreen extends ScreenAdapter {
             int loggerTileNum = logger.getCurrGridNum();
             logger.changeMoveSpeed(grid[iVal(preUpdateTileNum)][jVal(preUpdateTileNum)].getTerrainCost());
             if (preUpdateTileNum != loggerTileNum) { // then we literally just left that tile!
+                footstepSfx.play();
                 // if we left shrub or tree, then chop it down and leave roots
                 for (Iterator<ShrubTree> shrubTreeIterator = shrubTrees.iterator(); shrubTreeIterator.hasNext();) {
                     ShrubTree shrubTree = shrubTreeIterator.next();
                     if (shrubTree.gridX == iVal(preUpdateTileNum) && shrubTree.gridY == jVal(preUpdateTileNum)) {
                         shrubTreeIterator.remove();
+                        chopSfx.play();
                         grid[iVal(preUpdateTileNum)][jVal(preUpdateTileNum)].setNewTerrain(terrains[1]);
                     }
                 }

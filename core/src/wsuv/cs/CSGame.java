@@ -6,6 +6,8 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -23,6 +25,14 @@ public class CSGame extends Game {
     public static final String RSC_PRESSAKEY_IMG = "pressakey.png";
     public static final String RSC_MONO_FONT_FILE = "JetBrainsMono-Regular.ttf";
     public static final String RSC_MONO_FONT = "JBM.ttf";
+
+    public static final String RSC_SPIT_SFX = "tuah.wav";
+    public static final String RSC_FROG_HURT_SFX = "frogHurt.wav";
+    public static final String RSC_FROG_DIE_SFX = "frogDie.wav";
+    public static final String RSC_NOT_ALLOWED_SFX = "notAllowed.wav";
+    public static final String RSC_CONFIRMED_SFX = "confirmed.wav";
+    public static final String RSC_CHOP_SFX = "chop.wav";
+    public static final String RSC_FOOTSTEP_SFX = "footstep.wav";
 
     public static final String RSC_FROGTOWER_IMG = "frogTower.png";
     public static Texture greenFrogSheet;
@@ -58,6 +68,7 @@ public class CSGame extends Game {
     AssetManager am;  // AssetManager provides a single source for loaded resources
     SpriteBatch batch;
     Random random = new Random();
+    Music music;
 
     Animation<TextureRegion> greenFrogIdleAnimation;
     Animation<TextureRegion> greenFrogAttackAnimation;
@@ -141,7 +152,13 @@ public class CSGame extends Game {
         am.load(RSC_WHITETILE_IMG, Texture.class);
 
         // Load Sounds
-
+        am.load(RSC_SPIT_SFX, Sound.class);
+        am.load(RSC_FROG_HURT_SFX, Sound.class);
+        am.load(RSC_FROG_DIE_SFX, Sound.class);
+        am.load(RSC_NOT_ALLOWED_SFX, Sound.class);
+        am.load(RSC_CONFIRMED_SFX, Sound.class);
+        am.load(RSC_CHOP_SFX, Sound.class);
+        am.load(RSC_FOOTSTEP_SFX, Sound.class);
 
         batch = new SpriteBatch();
         setScreen(new LoadScreen(this));
@@ -149,7 +166,10 @@ public class CSGame extends Game {
         // start the music right away.
         // this one we'll only reference via the GameInstance, and it's streamed
         // so, no need to add it to the AssetManager...
-
+        music = Gdx.audio.newMusic(Gdx.files.internal("Forest_Hopper.mp3"));
+        music.setLooping(true);
+        music.setVolume(.5f);
+        music.play();
     }
 
     @Override
