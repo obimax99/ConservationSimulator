@@ -11,6 +11,4 @@
 - **[10]** Summons/Logger interactions
 - **[11]** Balancing
 - **[12]** Polish UI
-
-## Open Issues ##
 - **[13]** Final Changes

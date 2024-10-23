@@ -2,7 +2,9 @@
 
 Conservation Simulator is a Tower Defense game where you play 
 as a druid summoning frogs and trees and bees to help defend 
-your mutual home from loggers who would destroy it.
+your mutual home from the large family of loggers who would 
+destroy it. Use the bodies of loggers as fertilizer to summon 
+and upgrade creatures and hold the forest as long as you can.
 
 ## Controls
 
