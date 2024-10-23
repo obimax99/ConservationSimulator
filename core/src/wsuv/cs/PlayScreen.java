@@ -1092,9 +1092,9 @@ public class PlayScreen extends ScreenAdapter {
     public void endGame() {
         if (fertilizerCount > highScore) {
             FileHandle file = Gdx.files.local("highscore.txt");
-            file.writeString(Integer.toString(fertilizerCount), false);  // write the high score
+            file.writeString(Integer.toString(currentWave-1), false);  // write the high score
         }
-        csGame.setScreen(new VictoryScreen(csGame, fertilizerCount));
+        csGame.setScreen(new VictoryScreen(csGame, currentWave-1));
     }
 
     @Override
