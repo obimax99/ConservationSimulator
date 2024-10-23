@@ -10,6 +10,7 @@
 - **[9]** Logger animation + redesign
 - **[10]** Summons/Logger interactions
 - **[11]** Balancing
+- **[12]** Polish UI
 
 ## Open Issues ##
-- **[12]** Polish UI
+- **[13]** Final Changes
