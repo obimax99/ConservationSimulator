@@ -1,10 +1,12 @@
 package wsuv.cs;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.text.DecimalFormat;
@@ -41,6 +43,7 @@ public class PlayScreen extends ScreenAdapter {
     private ArrayList<Tower> towers;
     private ArrayList<FrogSpit> frogSpits;
 
+    private String[] buttonKeyBinds;
     private ArrayList<CSButton> upgradeButtons;
     private String[] upgradeButtonFuncs;
     private Tower towerBeingUpgraded;
@@ -49,13 +52,32 @@ public class PlayScreen extends ScreenAdapter {
     private String[] summonButtonFuncs;
     private int fertilizerCount;
     private boolean summoningTree;
+    private Sprite treeHolo;
     private ArrayList<ShrubTree> shrubTrees;
     private boolean summoningBees;
+    private Sprite beesHolo;
     private boolean summoningTower;
+    private Sprite towerHolo;
+    private Sprite validateHolo;
+
+    private Sound spitSfx;
+    private Sound frogHurtSfx;
+    private Sound frogDieSfx;
+    private Sound notAllowedSfx;
+    private Sound confirmedSfx;
+    private Sound chopSfx;
+    private Sound footstepSfx;
 
     public PlayScreen(CSGame game) {
         timer = 0;
         csGame = game;
+        spitSfx = game.am.get(CSGame.RSC_SPIT_SFX);
+        frogHurtSfx = game.am.get(CSGame.RSC_FROG_HURT_SFX);
+        frogDieSfx = game.am.get(CSGame.RSC_FROG_DIE_SFX);
+        notAllowedSfx = game.am.get(CSGame.RSC_NOT_ALLOWED_SFX);
+        confirmedSfx = game.am.get(CSGame.RSC_CONFIRMED_SFX);
+        chopSfx = game.am.get(CSGame.RSC_CHOP_SFX);
+        footstepSfx = game.am.get(CSGame.RSC_FOOTSTEP_SFX);
         state = SubState.PLAYING;
         DEBUG_pathfinding = false;
         DEBUG_borders = false;
@@ -80,6 +102,15 @@ public class PlayScreen extends ScreenAdapter {
         towerBeingUpgraded = null;
         fertilizerCount = 0;
         shrubTrees = new ArrayList<ShrubTree>(16);
+        treeHolo = new Sprite(game.am.get("trees.png", Texture.class));
+        treeHolo.setAlpha(0.7f);
+        beesHolo = new Sprite(game.am.get("bee.png", Texture.class));
+        beesHolo.setAlpha(0.7f);
+        towerHolo = new Sprite(game.greenFrogIdleAnimation.getKeyFrame(0.05f));
+        towerHolo.setSize(TILE_SIZE, TILE_SIZE);
+        //towerHolo.setScale(2);
+        towerHolo.setAlpha(0.85f);
+        validateHolo = new Sprite(game.am.get("whiteTile.png", Texture.class));
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -228,13 +259,96 @@ public class PlayScreen extends ScreenAdapter {
         multiplexer.addProcessor(new InputAdapter() {
             @Override
             public boolean keyDown(int keycode) {
+                if (hud.isOpen()) { return false; }
                 if (keycode == Input.Keys.ESCAPE) {
                     activateSummonButtons();
                     towerBeingUpgraded = null;
-                    summoningTree = false;
-                    summoningBees = false;
-                    summoningTower = false;
+                    cancelSummonBooleans();
                     return true;
+                }
+                else if (keycode == Input.Keys.Q) {
+                    // if its an upgrade
+                    cancelSummonBooleans();
+                    if (towerBeingUpgraded != null) {
+                        if (buttonFunc(upgradeButtonFuncs[0])) {
+                            // success, make the happy sound :)
+                            confirmedSfx.play();
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+                            notAllowedSfx.play();
+                        }
+                    }
+                    // else its a summon
+                    else {
+                        if (buttonFunc(summonButtonFuncs[0])) {
+                            // success, make the happy sound :)
+                            confirmedSfx.play();
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+
+                            notAllowedSfx.play();
+                        }
+                    }
+                }
+                else if (keycode == Input.Keys.W) {
+                    // if its an upgrade
+                    cancelSummonBooleans();
+                    if (towerBeingUpgraded != null) {
+                        if (buttonFunc(upgradeButtonFuncs[1])) {
+                            // success, make the happy sound :)
+
+                            confirmedSfx.play();
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+
+                            notAllowedSfx.play();
+                        }
+                    }
+                    // else its a summon
+                    else {
+                        if (buttonFunc(summonButtonFuncs[1])) {
+                            // success, make the happy sound :)
+
+                            confirmedSfx.play();
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+
+                            notAllowedSfx.play();
+                        }
+                    }
+                }
+                else if (keycode == Input.Keys.E) {
+                    // if its an upgrade
+                    cancelSummonBooleans();
+                    if (towerBeingUpgraded != null) {
+                        if (buttonFunc(upgradeButtonFuncs[2])) {
+                            // success, make the happy sound :)
+
+                            confirmedSfx.play();
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+
+                            notAllowedSfx.play();
+                        }
+                    }
+                    // else its a summon
+                    else {
+                        if (buttonFunc(summonButtonFuncs[2])) {
+                            // success, make the happy sound :)
+
+                            confirmedSfx.play();
+                        }
+                        else {
+                            // then there isn't enough resources to do this command, play the out of fertilizer sound
+
+                            notAllowedSfx.play();
+                        }
+                    }
                 }
                 return false;
             }
@@ -275,49 +389,62 @@ public class PlayScreen extends ScreenAdapter {
                 if (buttonHit != null) {
                     if (buttonFunc(func)) {
                         // success, make the happy sound :)
-                        System.out.println("button active/upgraded");
+
+                        confirmedSfx.play();
                     }
                     else {
                         // then there isn't enough resources to do this command, play the out of fertilizer sound
-                        System.out.println("not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 // if this fails, perhaps we make it a boolean and then it will play a sound.
                 // also probably a success would make a sound
-                else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; }
+                else if (towerHit != null) { activateUpgradeButtons(); towerBeingUpgraded = towerHit; cancelSummonBooleans(); }
+                else if (gridX >= GRID_SIZE) {
+                    // hitting nothing is the same as hitting escape
+                    activateSummonButtons();
+                    towerBeingUpgraded = null;
+                    cancelSummonBooleans();
+                    return false;
+                }
                 // there's another option: we clicked a space after hitting a summon button to summon!
                 else if (summoningTree) {
                     if (createTree(gridX, gridY)) {
-                        System.out.println("tree summoned");
+
+                        confirmedSfx.play();
                     }
                     else {
                         // clicked on an invalid space!
-                        System.out.println("tree in invalid space or not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 else if (summoningBees) {
                     if (createBees(gridX, gridY)) {
-                        System.out.println("bees summoned");
+
+                        confirmedSfx.play();
                     }
                     else {
-                        System.out.println("bees in invalid space or not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 else if (summoningTower) {
                     if (createTower(gridX, gridY)) {
-                        System.out.println("tower summoned");
+
+                        confirmedSfx.play();
                     }
                     else {
-                        System.out.println("tower in invalid space or not enough fertilizer");
+
+                        notAllowedSfx.play();
                     }
                 }
                 else {
                     // hitting nothing is the same as hitting escape
                     activateSummonButtons();
                     towerBeingUpgraded = null;
-                    summoningTree = false;
-                    summoningBees = false;
-                    summoningTower = false;
+                    cancelSummonBooleans();
                     return false;
                 }
                 return true;
@@ -368,11 +495,12 @@ public class PlayScreen extends ScreenAdapter {
                 if (logger.gridX == tower.gridX && logger.gridY == tower.gridY) {
                     // if the logger is already on top of the tower, then the tower takes damage and the logger dies
                     tower.takeDamage(logger.damage);
+                    frogHurtSfx.play();
+                    if (tower.getHealth() <= 0) { frogDieSfx.play(); } // play death sound before isDead true
                     logger.takeDamage(logger.damage); //guaranteed to kill logger
-                    if (tower.isDead) { towerIterator.remove(); doPathfinding(); continue; }
-                    // need to check here so that we don't kill extra loggers
                 }
             }
+            if (tower.isDead) { towerIterator.remove(); doPathfinding(); continue; }
             // updates internal attack timers and maybe other stuff idk yet
             tower.update(delta);
             // if attack isn't ready OR nothing is in range, this method will return null
@@ -380,6 +508,7 @@ public class PlayScreen extends ScreenAdapter {
             if (targetedLogger == null) { continue; }
             // if we actually can shoot, then shoot at that logger
             shootProjectile(tower.gridX, tower.gridY, targetedLogger);
+            spitSfx.play();
         }
 
         // if all towers have been destroyed, RIP-- that's the game.
@@ -398,11 +527,13 @@ public class PlayScreen extends ScreenAdapter {
             int loggerTileNum = logger.getCurrGridNum();
             logger.changeMoveSpeed(grid[iVal(preUpdateTileNum)][jVal(preUpdateTileNum)].getTerrainCost());
             if (preUpdateTileNum != loggerTileNum) { // then we literally just left that tile!
+                footstepSfx.play();
                 // if we left shrub or tree, then chop it down and leave roots
                 for (Iterator<ShrubTree> shrubTreeIterator = shrubTrees.iterator(); shrubTreeIterator.hasNext();) {
                     ShrubTree shrubTree = shrubTreeIterator.next();
                     if (shrubTree.gridX == iVal(preUpdateTileNum) && shrubTree.gridY == jVal(preUpdateTileNum)) {
                         shrubTreeIterator.remove();
+                        chopSfx.play();
                         grid[iVal(preUpdateTileNum)][jVal(preUpdateTileNum)].setNewTerrain(terrains[1]);
                     }
                 }
@@ -423,6 +554,55 @@ public class PlayScreen extends ScreenAdapter {
         }
         // if all the loggers are dead (after they've all been spawned!), then the wave has been beaten.
         if (liveLoggers.isEmpty() && timer >= wave_time) { goNextWave(false); }
+
+        // holograms for summoning
+
+        if (summoningTree || summoningBees || summoningTower) {
+            int xMousePos = Gdx.input.getX();
+            int yMousePos = 928 - Gdx.input.getY();
+            int gridX = xMousePos / TILE_SIZE;
+            int gridY = yMousePos / TILE_SIZE;
+            if (validateGridSpace(gridX, gridY)) {
+                int summonCost = 9999;
+                if (summoningTree && grid[gridX][gridY].terrain == terrains[1]) {
+                    summonCost = summonCosts[0]-1;
+                }
+                else if (summoningTree) {
+                    summonCost = summonCosts[0];
+                }
+                else if (summoningBees) {
+                    summonCost = summonCosts[1];
+                }
+                else if (summoningTower) {
+                    summonCost = summonCosts[2];
+                }
+
+                if (summonCost <= fertilizerCount) {
+                    validateHolo.setColor(Color.GREEN);
+                }
+                else {
+                    validateHolo.setColor(Color.RED);
+                }
+            } else {
+                validateHolo.setColor(Color.RED);
+            }
+            validateHolo.setAlpha(0.5f);
+            validateHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE);
+            if (summoningTree) { treeHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE); }
+            else { treeHolo.setPosition(-TILE_SIZE, -TILE_SIZE); }
+            if (summoningBees) { beesHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE); }
+            else { beesHolo.setPosition(-TILE_SIZE, -TILE_SIZE); }
+            if (summoningTower) { towerHolo.setPosition(gridX*TILE_SIZE, gridY*TILE_SIZE); }
+            else { towerHolo.setPosition(-TILE_SIZE, -TILE_SIZE); }
+        }
+        else {
+            validateHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+            treeHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+            beesHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+            towerHolo.setPosition(-TILE_SIZE, -TILE_SIZE);
+        }
+
+
 
     }
 
@@ -475,16 +655,21 @@ public class PlayScreen extends ScreenAdapter {
         }
         csGame.batch.draw(csGame.am.get(CSGame.RSC_BACKGROUNDUI_IMG, Texture.class), 928, 0);
         font.draw(csGame.batch, Integer.toString(fertilizerCount), 1024, 28);
+        int ii = -1;
         for (CSButton upgradeButton : upgradeButtons) {
             if (upgradeButton.isActive()) {
+                ii++;
                 upgradeButton.draw(csGame.batch);
                 font.draw(csGame.batch, Integer.toString(towerBeingUpgraded.getUpgradeCost(upgradeButton.buttonNum)), upgradeButton.getX() + 100, upgradeButton.getY()+20);
+                font.draw(csGame.batch, buttonKeyBinds[ii], upgradeButton.getX()-20, upgradeButton.getY()+20);
             }
         }
         for (CSButton summonButton : summonButtons) {
             if (summonButton.isActive()) {
+                ii++;
                 summonButton.draw(csGame.batch);
                 font.draw(csGame.batch, Integer.toString(summonCosts[summonButton.buttonNum]), summonButton.getX() + 100, summonButton.getY()+20);
+                font.draw(csGame.batch, buttonKeyBinds[ii], summonButton.getX()-20, summonButton.getY()+20);
             }
         }
         if (towerBeingUpgraded != null) {
@@ -492,6 +677,12 @@ public class PlayScreen extends ScreenAdapter {
             font.draw(csGame.batch, "Current Range: " + towerBeingUpgraded.getRange(), 960,414 );
             font.draw(csGame.batch, "Current AtkSpd: " + formatter.format(towerBeingUpgraded.getAttackSpeed()), 944,666 );
         }
+
+        // draw holograms
+        validateHolo.draw(csGame.batch);
+        treeHolo.draw(csGame.batch);
+        beesHolo.draw(csGame.batch);
+        towerHolo.draw(csGame.batch);
 
         font.setColor(Color.BLACK);
         hud.draw(csGame.batch);
@@ -722,6 +913,11 @@ public class PlayScreen extends ScreenAdapter {
                 3,
                 12,
         };
+        buttonKeyBinds = new String[] {
+                "Q",
+                "W",
+                "E",
+        };
 
         final float WIDTH_OF_BUTTONS = 128;
         final float HEIGHT_OF_BUTTONS = 128;
@@ -800,22 +996,19 @@ public class PlayScreen extends ScreenAdapter {
     }
 
     public boolean summonTree() {
+        cancelSummonBooleans();
         summoningTree = true;
-        summoningBees = false;
-        summoningTower = false;
         return true;
     }
 
     public boolean summonBees() {
-        summoningTree = false;
+        cancelSummonBooleans();
         summoningBees = true;
-        summoningTower = false;
         return true;
     }
 
     public boolean summonTower() {
-        summoningTree = false;
-        summoningBees = false;
+        cancelSummonBooleans();
         summoningTower = true;
         return true;
     }
@@ -855,7 +1048,7 @@ public class PlayScreen extends ScreenAdapter {
 
     public boolean validateGridSpace(int gridX, int gridY) {
         // can't summon unless it's on the actual grid!
-        if (gridX >= GRID_SIZE) return false;
+        if (gridX >= GRID_SIZE || gridY >= GRID_SIZE || gridX < 0 || gridY < 0) return false;
         // can't summon on shrubs or trees or rocks:
         if (grid[gridX][gridY].terrain == terrains[2] || grid[gridX][gridY].terrain == terrains[3] || grid[gridX][gridY].terrain == terrains[4]) { return false; }
         // cannot summon on top of bees or loggers or towers-- not sure how to do bees just yet!
@@ -888,6 +1081,12 @@ public class PlayScreen extends ScreenAdapter {
                 System.out.println("you just hit a fake button!");
                 return false;
         }
+    }
+
+    public void cancelSummonBooleans() {
+        summoningTree = false;
+        summoningBees = false;
+        summoningTower = false;
     }
 
     public void endGame() {
