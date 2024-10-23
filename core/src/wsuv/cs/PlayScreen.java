@@ -517,7 +517,7 @@ public class PlayScreen extends ScreenAdapter {
         // shoot those arrows
         for (Iterator<FrogSpit> frogSpitIterator = frogSpits.iterator(); frogSpitIterator.hasNext();) {
             FrogSpit frogSpit = frogSpitIterator.next();
-            if (frogSpit.update(delta)) { frogSpitIterator.remove(); }
+            if (frogSpit.update(delta, liveLoggers)) { frogSpitIterator.remove(); }
         }
 
         // move loggers and check if they're dead or not
