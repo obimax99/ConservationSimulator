@@ -42,3 +42,8 @@
   Forest Hopper (Forest_Hopper.wav)
   https://crossedkiller.itch.io/forest-hopper
   CC BY 4.0
+
+  JonCon_Library [Bees Buzzing]
+  Bee Buzzing (bees.wav)
+  https://freesound.org/people/JonCon_Library/sounds/481647/
+  CC0

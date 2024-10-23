@@ -23,16 +23,24 @@ import java.util.Random;
 public class CSGame extends Game {
     public static final String RSC_GAMEOVER_IMG = "gameover.png";
     public static final String RSC_PRESSAKEY_IMG = "pressakey.png";
+    public static final String RSC_INTRO_IMG = "intro.png";
+    public static final String RSC_LOGO_IMG = "logo.png";
     public static final String RSC_MONO_FONT_FILE = "JetBrainsMono-Regular.ttf";
     public static final String RSC_MONO_FONT = "JBM.ttf";
 
-    public static final String RSC_SPIT_SFX = "tuah.wav";
+    public static final String RSC_SPIT1_SFX = "tuah1.wav";
+    public static final String RSC_SPIT2_SFX = "tuah2.wav";
+    public static final String RSC_SPIT3_SFX = "tuah3.wav";
+    public static final String RSC_SPIT4_SFX = "tuah4.wav";
     public static final String RSC_FROG_HURT_SFX = "frogHurt.wav";
     public static final String RSC_FROG_DIE_SFX = "frogDie.wav";
     public static final String RSC_NOT_ALLOWED_SFX = "notAllowed.wav";
     public static final String RSC_CONFIRMED_SFX = "confirmed.wav";
     public static final String RSC_CHOP_SFX = "chop.wav";
     public static final String RSC_FOOTSTEP_SFX = "footstep.wav";
+    public static final String RSC_BEES_SFX = "bees.wav";
+    public static final String RSC_LOGGER_DIE_SFX = "loggerDie.wav";
+    public static final String RSC_GROW_SFX = "grow.wav";
 
     public static final String RSC_FROGTOWER_IMG = "frogTower.png";
     public static Texture greenFrogSheet;
@@ -126,6 +134,8 @@ public class CSGame extends Game {
         // Load Textures after the font...
         am.load(RSC_GAMEOVER_IMG, Texture.class);
         am.load(RSC_PRESSAKEY_IMG, Texture.class);
+        am.load(RSC_INTRO_IMG, Texture.class);
+        am.load(RSC_LOGO_IMG, Texture.class);
 
         am.load(RSC_FROGTOWER_IMG, Texture.class);
         am.load(RSC_FROGSPIT_IMG, Texture.class);
@@ -152,13 +162,19 @@ public class CSGame extends Game {
         am.load(RSC_WHITETILE_IMG, Texture.class);
 
         // Load Sounds
-        am.load(RSC_SPIT_SFX, Sound.class);
+        am.load(RSC_SPIT1_SFX, Sound.class);
+        am.load(RSC_SPIT2_SFX, Sound.class);
+        am.load(RSC_SPIT3_SFX, Sound.class);
+        am.load(RSC_SPIT4_SFX, Sound.class);
         am.load(RSC_FROG_HURT_SFX, Sound.class);
         am.load(RSC_FROG_DIE_SFX, Sound.class);
         am.load(RSC_NOT_ALLOWED_SFX, Sound.class);
         am.load(RSC_CONFIRMED_SFX, Sound.class);
         am.load(RSC_CHOP_SFX, Sound.class);
         am.load(RSC_FOOTSTEP_SFX, Sound.class);
+        am.load(RSC_BEES_SFX, Sound.class);
+        am.load(RSC_LOGGER_DIE_SFX, Sound.class);
+        am.load(RSC_GROW_SFX, Sound.class);
 
         batch = new SpriteBatch();
         setScreen(new LoadScreen(this));
@@ -169,7 +185,6 @@ public class CSGame extends Game {
         music = Gdx.audio.newMusic(Gdx.files.internal("Forest_Hopper.mp3"));
         music.setLooping(true);
         music.setVolume(.5f);
-        music.play();
     }
 
     @Override

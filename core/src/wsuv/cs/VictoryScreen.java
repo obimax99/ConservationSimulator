@@ -30,7 +30,7 @@ public class VictoryScreen extends ScreenAdapter {
     public void update(float delta) {
         timer += delta;
         if ((timer >= 20.0) || (timer >= 5.0 && Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY))) {
-            csGame.setScreen(new SplashScreen(csGame));
+            csGame.setScreen(new SplashScreen(csGame, false));
         }
     }
 
@@ -39,9 +39,9 @@ public class VictoryScreen extends ScreenAdapter {
         ScreenUtils.clear(0, 0, 0, 1);
         csGame.batch.begin();
         font.setColor(Color.WHITE);
-        font.draw(csGame.batch, "Final Score: ", 500, 400);
-        font.draw(csGame.batch, Integer.toString(score), 600, 400);
-        csGame.batch.draw(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class), 200, 150);
+        font.draw(csGame.batch, "Final Score: ", 500, 200);
+        font.draw(csGame.batch, Integer.toString(score), 600, 200);
+        csGame.batch.draw(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class), Gdx.graphics.getWidth()/2-(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class).getWidth()/2), Gdx.graphics.getHeight()/2-(csGame.am.get(CSGame.RSC_GAMEOVER_IMG, Texture.class).getHeight()/2));
         font.draw(csGame.batch, "Your forest of friends lives on in our hearts <3", 375, 150);
         csGame.batch.end();
     }

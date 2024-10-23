@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.lang.Math;
+import java.util.ArrayList;
 
 import static wsuv.cs.Constants.*;
 
@@ -26,12 +27,21 @@ public class FrogSpit extends Sprite {
     }
 
     // if it made it to its destination, return true so it can be removed from projectile list.
-    public boolean update(float delta) {
+    public boolean update(float delta, ArrayList<Logger> liveLoggers) {
         float x = getX();
         float y = getY();
         if (target == null) {
             if (x < 0 || x > (GRID_SIZE-1)*TILE_SIZE || y < 0 || y > (GRID_SIZE-1)*TILE_SIZE) { return true; }
             else {
+                for (Logger logger : liveLoggers) {
+                    float loggerX = logger.getX();
+                    float loggerY = logger.getY();
+                    if (loggerX <= x+ (float) TILE_SIZE /2 && loggerX >= x-(float) TILE_SIZE /2 &&
+                            loggerY <= y+(float) TILE_SIZE /2 && loggerY >= y-(float) TILE_SIZE /2) {
+                        logger.takeDamage(damage);
+                        return true;
+                    }
+                }
                 setX(x + delta * xVelocity);
                 setY(y + delta * yVelocity);
                 return false;

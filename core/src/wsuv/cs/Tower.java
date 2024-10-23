@@ -22,7 +22,7 @@ public class Tower extends Sprite {
     private int maxHealth;
     private int health;
     public boolean isDead;
-    private final int healthIncreasePerUpgrade = 1;
+    private final int healthIncreasePerUpgrade = 2;
     private final int MAX_HEALTH_UPGRADES = 10;
     private int currentHealthUpgrades;
     private int range;
